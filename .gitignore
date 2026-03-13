@@ -1,0 +1,24 @@
+﻿# Ambiente virtual
+venv/
+.venv/
+env/
+
+# Chaves e segredos - NUNCA commitar!
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# VS Code
+.vscode/
+
+# Dados brutos (podem ser grandes)
+data/raw/*
+!data/raw/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
