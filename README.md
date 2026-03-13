@@ -38,11 +38,12 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 
 | Funcionalidade | Descrição | Status |
 |---|---|---|
-| 📄 **Ingestão de PDFs** | Extração de texto com metadados via PyMuPDF | 🔄 Em breve |
+| 📄 **Ingestão de PDFs** | Extração de texto com metadados via PyMuPDF | ✅ Concluído |
+| 🔪 **Chunking Inteligente** | Divisão em chunks com overlap via LangChain | ✅ Concluído |
+| 🤖 **Conexão GPT-4o-mini** | Geração de respostas via API OpenAI | ✅ Concluído |
 | 🖼️ **OCR de Imagens** | Reconhecimento óptico de texto com Tesseract | 🔄 Em breve |
 | 🔢 **Embeddings Semânticos** | Vetorização com `text-embedding-3-small` da OpenAI | 🔄 Em breve |
 | 🗄️ **Banco Vetorial** | Armazenamento e busca por similaridade no Pinecone | 🔄 Em breve |
-| 🤖 **Respostas com GPT-4o-mini** | Geração de respostas fundamentadas no contexto | ✅ Conectado |
 | 📊 **Avaliação RAGAS** | Métricas: faithfulness, answer relevancy, context precision | 🔄 Em breve |
 | 🛡️ **Anti-Alucinação** | Guardrails que bloqueiam respostas abaixo do threshold | 🔄 Em breve |
 | 💬 **Memória de Conversa** | Histórico para contexto em conversas longas | 🔄 Em breve |
@@ -90,7 +91,8 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | LLM | OpenAI GPT-4o-mini | latest |
 | Embeddings | OpenAI text-embedding-3-small | latest |
 | Banco Vetorial | Pinecone | 3.0+ |
-| Parser PDF | PyMuPDF (fitz) | 1.23+ |
+| Parser PDF | PyMuPDF (fitz) | 1.27+ |
+| Chunking | LangChain Text Splitters | 0.1+ |
 | OCR | Tesseract + pytesseract | 5.0+ |
 | Avaliação | RAGAS | 0.1+ |
 | Interface | Streamlit | 1.30+ |
@@ -110,10 +112,11 @@ intellidoc-rag/
 │
 ├── 📂 data/
 │   ├── raw/                      # PDFs e imagens originais
-│   └── processed/                # Chunks extraídos em JSON
+│   └── processed/
+│       └── chunks.json           # Chunks extraídos com metadados ✅
 │
 ├── 📂 src/
-│   ├── ingest.py                 # Ingestão: PDF + OCR
+│   ├── ingest.py                 # ✅ Ingestão multi-PDF com chunking
 │   ├── embeddings.py             # Geração de embeddings OpenAI
 │   ├── vector_store.py           # Interface com Pinecone
 │   ├── rag_pipeline.py           # Pipeline RAG completo
@@ -179,7 +182,14 @@ PINECONE_API_KEY=...
 PINECONE_INDEX_NAME=intellidoc
 ```
 
-### 5. Execute o teste de conexão
+### 5. Ingira os documentos
+
+```bash
+# Coloque PDFs em data/raw/ e execute:
+python src/ingest.py
+```
+
+### 6. Teste a conexão com a API
 
 ```bash
 python src/test_api.py
@@ -205,8 +215,8 @@ Respostas abaixo do threshold de **faithfulness** são bloqueadas automaticament
 ## 🗺️ Roadmap
 
 - [x] **Fase 1** — Ambiente, Git, VS Code e API OpenAI conectada ✅
-- [ ] **Fase 2** — Pipeline de ingestão (PDF + OCR) 🔄
-- [ ] **Fase 3** — Embeddings e banco vetorial
+- [x] **Fase 2** — Pipeline de ingestão multi-PDF com chunking ✅
+- [ ] **Fase 3** — Embeddings e banco vetorial Pinecone 🔄
 - [ ] **Fase 4** — Pipeline RAG completo
 - [ ] **Fase 5** — Avaliação RAGAS e anti-alucinação
 - [ ] **Fase 6** — Interface Streamlit e publicação
@@ -214,6 +224,13 @@ Respostas abaixo do threshold de **faithfulness** são bloqueadas automaticament
 ---
 
 ## 📝 Diário de Desenvolvimento
+
+### ✅ Fase 2 — Concluída em 13/03/2026
+- Pipeline de ingestão de PDFs com PyMuPDF funcionando
+- Chunking inteligente com `RecursiveCharacterTextSplitter` do LangChain
+- Processamento em lote: todos os PDFs de `data/raw/` processados de uma vez
+- 4 documentos técnicos ingeridos → **63 chunks** gerados com metadados
+- Chunks salvos em `data/processed/chunks.json` para uso na Fase 3
 
 ### ✅ Fase 1 — Concluída em 13/03/2026
 - Ambiente Python configurado com `venv` no Windows
