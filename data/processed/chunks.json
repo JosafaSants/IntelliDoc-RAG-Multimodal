@@ -1,5 +1,333 @@
 [
   {
+    "texto": "Git e GitHub: Guia Completo para\nDesenvolvedores\nControle de versao do basico ao avancado\nVersao 4.2 | Equipe de Engenharia | Marco 2026",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 1,
+      "chunk_id": "guia_git_github.pdf_p1_c0"
+    }
+  },
+  {
+    "texto": "1. O que e Git e por que usar?\nGit e um sistema de controle de versao distribuido criado por Linus Torvalds em 2005 para\ngerenciar o desenvolvimento do kernel Linux. Hoje e o sistema de controle de versao mais usado\nno mundo, presente em praticamente todos os projetos de software profissional.\nCom Git voce pode voltar a qualquer versao anterior do codigo, trabalhar em novas\nfuncionalidades sem afetar o codigo principal, colaborar com outros desenvolvedores sem",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 2,
+      "chunk_id": "guia_git_github.pdf_p2_c0"
+    }
+  },
+  {
+    "texto": "sobrescrever o trabalho alheio e rastrear exatamente quem fez cada mudanca e quando.\n1.1 Conceitos Fundamentais\nConceito\nDefinicao\nRepository\nPasta que o Git monitora, contem todo o historico do projeto\nCommit\nSnapshot do projeto em um momento especifico com mensagem descritiva\nBranch\nLinha de desenvolvimento paralela e independente\nMerge\nUniao de duas branches em uma\nRemote\nRepositorio hospedado em servidor como GitHub ou GitLab\nClone\nCopia local completa de um repositorio remoto\nPull",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 2,
+      "chunk_id": "guia_git_github.pdf_p2_c1"
+    }
+  },
+  {
+    "texto": "Pull\nBaixar e integrar mudancas do repositorio remoto\nPush\nEnviar commits locais para o repositorio remoto\nStaging Area\nArea intermediaria onde voce prepara o proximo commit",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 2,
+      "chunk_id": "guia_git_github.pdf_p2_c2"
+    }
+  },
+  {
+    "texto": "2. Comandos Essenciais do Git\ngit init cria um novo repositorio Git na pasta atual. git clone URL copia um repositorio remoto para\nsua maquina. git status mostra o estado atual do repositorio: arquivos modificados, na staging\narea e nao rastreados.\ngit add arquivo adiciona um arquivo especifico a staging area. git add ponto adiciona todos os\narquivos modificados. git commit menos m mensagem cria um commit com a mensagem",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_git_github.pdf_p3_c0"
+    }
+  },
+  {
+    "texto": "especificada. Mensagens de commit claras sao essenciais para um historico legivel.\n2.1 Trabalhando com Branches\nO fluxo recomendado e nunca commitar diretamente na branch main ou master. Sempre crie uma\nbranch para cada feature ou correcao de bug. O comando git checkout menos b nome-da-branch\ncria e muda para uma nova branch em um unico passo.\nQuando a feature estiver pronta, abra um Pull Request (PR) no GitHub para revisao do codigo",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_git_github.pdf_p3_c1"
+    }
+  },
+  {
+    "texto": "antes de fazer merge na branch principal. Esse processo garante qualidade e permite que outros\ndesenvolvedores revisem as mudancas.\n2.2 Resolvendo Conflitos de Merge\nConflitos acontecem quando duas branches modificam a mesma parte de um arquivo. O Git\nmarca os conflitos no arquivo com marcadores menor menor menor HEAD, igual igual igual e\nmaior maior maior. Voce deve editar o arquivo manualmente para resolver o conflito e depois\ncommitar.",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_git_github.pdf_p3_c2"
+    }
+  },
+  {
+    "texto": "commitar.\nPara evitar conflitos: sincronize sua branch com a principal frequentemente usando git pull origin\nmain, faca commits pequenos e focados, comunique a equipe sobre areas do codigo que voce\nesta modificando e use ferramentas visuais como VS Code para resolver conflitos.\n3. GitHub: Colaboracao e Portfolio\nGitHub e a maior plataforma de hospedagem de repositorios Git do mundo com mais de 100\nmilhoes de desenvolvedores. Alem de hospedar codigo, oferece ferramentas de colaboracao",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_git_github.pdf_p3_c3"
+    }
+  },
+  {
+    "texto": "como Issues, Pull Requests, Projects e Actions para CI/CD.\nPara desenvolvedores, o GitHub funciona como portfolio profissional. Recrutadores e empresas\nanalisam o perfil GitHub de candidatos para avaliar contribuicoes open source, qualidade do\ncodigo, consistencia de commits e diversidade de projetos.\n3.1 Boas Praticas para um Portfolio GitHub Profissional\nREADME bem escrito e o cartao de visita do projeto. Deve conter descricao clara do que o projeto",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_git_github.pdf_p3_c4"
+    }
+  },
+  {
+    "texto": "faz, tecnologias usadas, instrucoes de instalacao passo a passo, exemplos de uso e, idealmente,\nscreenshots ou GIFs demonstrando o projeto em funcionamento.",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_git_github.pdf_p3_c5"
+    }
+  },
+  {
+    "texto": "Commits frequentes e com mensagens claras mostram consistencia e boas praticas. Use o\npadrao Conventional Commits: feat para novas funcionalidades, fix para correcoes, docs para\ndocumentacao, refactor para refatoracoes e test para testes.\nMantenha o repositorio organizado com .gitignore bem configurado, sem arquivos\ndesnecessarios, com estrutura de pastas logica e com licenca definida. Repositorios bem\norganizados transmitem profissionalismo.\n4. GitHub Actions: Automacao e CI/CD",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 4,
+      "chunk_id": "guia_git_github.pdf_p4_c0"
+    }
+  },
+  {
+    "texto": "4. GitHub Actions: Automacao e CI/CD\nGitHub Actions e a plataforma de automacao integrada ao GitHub. Permite criar workflows que\nexecutam automaticamente em resposta a eventos como push, pull request ou em horarios\nagendados. E usado principalmente para CI/CD (Continuous Integration e Continuous\nDeployment).\nUm pipeline de CI tipico inclui: executar testes automatizados a cada pull request, verificar",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 4,
+      "chunk_id": "guia_git_github.pdf_p4_c1"
+    }
+  },
+  {
+    "texto": "formatacao e estilo do codigo com linters, construir a aplicacao e verificar se compila sem erros e\ngerar relatorio de cobertura de testes.\nCD (Continuous Deployment) automatiza o deploy da aplicacao apos aprovacao. Com GitHub\nActions e possivel fazer deploy automaticamente para AWS, Azure, GCP, Heroku ou qualquer\noutro provedor de nuvem apos merge na branch principal.\n5. Fluxos de Trabalho Populares\nGitFlow e um modelo de branching que define branches especificas para features, releases e",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 4,
+      "chunk_id": "guia_git_github.pdf_p4_c2"
+    }
+  },
+  {
+    "texto": "hotfixes. E popular em projetos com ciclos de release definidos. Usa as branches main\n(producao), develop (integracao), feature (novas funcionalidades) e hotfix (correcoes urgentes).\nGitHub Flow e mais simples: apenas main e feature branches. Qualquer mudanca vai para uma\nbranch, abre um PR, e apos aprovacao faz merge direto na main que e deployada continuamente.\nIdeal para times que praticam deploy continuo.",
+    "metadata": {
+      "arquivo": "guia_git_github.pdf",
+      "pagina": 4,
+      "chunk_id": "guia_git_github.pdf_p4_c3"
+    }
+  },
+  {
+    "texto": "Guia Pratico: Python para Ciencia de\nDados\nDo ambiente virtual ao modelo treinado\nVersao 2.1 | Atualizado em Marco 2026",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 1,
+      "chunk_id": "guia_python_data_science.pdf_p1_c0"
+    }
+  },
+  {
+    "texto": "1. Por que Python para Data Science?\nPython se tornou a linguagem padrao para ciencia de dados e machine learning por tres razoes\nprincipais: simplicidade de sintaxe que permite focar no problema e nao na linguagem,\necossistema robusto com bibliotecas como NumPy, Pandas e Scikit-learn, e comunidade ativa\nque produz novos recursos constantemente.\nDe acordo com a pesquisa Stack Overflow 2025, Python e a linguagem mais usada por cientistas",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 2,
+      "chunk_id": "guia_python_data_science.pdf_p2_c0"
+    }
+  },
+  {
+    "texto": "de dados pelo oitavo ano consecutivo. Mais de 85 porcento dos projetos de machine learning em\nproducao utilizam Python como linguagem principal.\n1.1 Configurando o Ambiente\nO primeiro passo e criar um ambiente virtual isolado para cada projeto. Isso evita conflitos entre\nversoes de bibliotecas. Use o comando python -m venv nome_do_ambiente para criar e\nscripts/activate para ativar no Windows ou source activate no Linux e Mac.",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 2,
+      "chunk_id": "guia_python_data_science.pdf_p2_c1"
+    }
+  },
+  {
+    "texto": "Apos ativar o ambiente, instale as bibliotecas com pip install. Sempre salve as dependencias com\npip freeze maior requirements.txt antes de commitar o projeto no GitHub.\n2. NumPy: Computacao Numerica\nNumPy e a fundacao de quase todo o ecossistema cientifico do Python. Ela fornece arrays\nmultidimensionais de alta performance e operacoes matematicas vetorizadas que sao dezenas de\nvezes mais rapidas que listas Python nativas.",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 2,
+      "chunk_id": "guia_python_data_science.pdf_p2_c2"
+    }
+  },
+  {
+    "texto": "vezes mais rapidas que listas Python nativas.\nO objeto central do NumPy e o ndarray (n-dimensional array). Arrays NumPy sao homogeneos\n(todos os elementos do mesmo tipo), armazenados em blocos contiguos de memoria e suportam\noperacoes vetorizadas sem loops explicitos.\n2.1 Operacoes Essenciais com Arrays\nOperacao\nCodigo\nDescricao\nCriar array\nnp.array([1,2,3])\nConverte lista em array\nZeros\nnp.zeros((3,3))\nMatriz 3x3 de zeros\nArange\nnp.arange(0,10,2)\nArray [0,2,4,6,8]\nReshape\narr.reshape(2,3)",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 2,
+      "chunk_id": "guia_python_data_science.pdf_p2_c3"
+    }
+  },
+  {
+    "texto": "Array [0,2,4,6,8]\nReshape\narr.reshape(2,3)\nMuda forma sem copiar dados\nMedia\narr.mean()\nMedia dos elementos\nDesvio padrao\narr.std()\nDesvio padrao\nProduto matricial\nnp.dot(A,B)\nMultiplicacao de matrizes",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 2,
+      "chunk_id": "guia_python_data_science.pdf_p2_c4"
+    }
+  },
+  {
+    "texto": "3. Pandas: Manipulacao de Dados\nPandas e a biblioteca essencial para manipulacao de dados tabulares em Python. O DataFrame e\nsua estrutura central: uma tabela bidimensional com linhas e colunas nomeadas, similar a uma\nplanilha Excel mas com poder computacional muito superior.\nCom Pandas e possivel carregar dados de CSV, Excel, JSON, SQL e dezenas de outros formatos\ncom uma unica linha de codigo. A biblioteca oferece ferramentas poderosas para limpeza,",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_python_data_science.pdf_p3_c0"
+    }
+  },
+  {
+    "texto": "transformacao, agrupamento e analise de dados.\n3.1 Operacoes Mais Usadas no Pandas\nSelecao de colunas: use df['coluna'] para uma coluna ou df[['col1','col2']] para multiplas. Filtragem\nde linhas: use df[df['idade'] maior 18] para filtrar por condicao. Agrupamento:\ndf.groupby('categoria').mean() agrupa e calcula a media por categoria.\nTratamento de valores nulos e critico na preparacao de dados. Use df.isnull().sum() para contar",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_python_data_science.pdf_p3_c1"
+    }
+  },
+  {
+    "texto": "nulos por coluna, df.dropna() para remover linhas com nulos, ou df.fillna(valor) para preencher\ncom um valor especifico.\n3.2 Merge e Join de DataFrames\nAssim como SQL, Pandas permite combinar DataFrames com pd.merge(). Os tipos de join sao:\ninner (apenas registros em ambos), left (todos da esquerda), right (todos da direita) e outer (todos\nde ambos). O parametro on especifica a coluna de juncao.\n4. Scikit-learn: Machine Learning",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_python_data_science.pdf_p3_c2"
+    }
+  },
+  {
+    "texto": "4. Scikit-learn: Machine Learning\nScikit-learn e a biblioteca padrao para machine learning classico em Python. Ela oferece\nimplementacoes eficientes de dezenas de algoritmos de classificacao, regressao, clustering e\nreducao de dimensionalidade, tudo com uma API consistente e bem documentada.\nO fluxo padrao no Scikit-learn segue sempre o mesmo padrao: instanciar o modelo, chamar fit()\ncom os dados de treino, e usar predict() ou transform() para novos dados. Essa consistencia",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_python_data_science.pdf_p3_c3"
+    }
+  },
+  {
+    "texto": "facilita muito a experimentacao com diferentes algoritmos.\n4.1 Pipeline de Machine Learning\nUm pipeline de ML completo envolve: coleta de dados, exploracao e visualizacao (EDA), limpeza\ne pre-processamento, engenharia de features, selecao e treino do modelo, avaliacao com\nmetricas adequadas e deploy em producao. Cada etapa e critica para o resultado final.\nPara avaliacao de modelos de classificacao as principais metricas sao: acuracia (percentual de",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_python_data_science.pdf_p3_c4"
+    }
+  },
+  {
+    "texto": "acertos), precisao (dos que foram classificados como positivo, quantos realmente sao), recall (dos\nque sao positivos, quantos foram encontrados) e F1-score (media harmonica de precisao e\nrecall).",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 3,
+      "chunk_id": "guia_python_data_science.pdf_p3_c5"
+    }
+  },
+  {
+    "texto": "5. Boas Praticas em Projetos de Data Science\nReproducibilidade e fundamental: sempre fixe seeds aleatorias com numpy.random.seed() e\ndefina versoes exatas das bibliotecas no requirements.txt. Documente todas as decisoes e\nexperimentos em notebooks Jupyter com explicacoes claras.\nVersionamento de dados e modelos com ferramentas como DVC complementa o Git para\nprojetos de dados. Nunca armazene datasets grandes no repositorio Git. Use .gitignore para\nignorar arquivos de dados e modelos treinados.",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 4,
+      "chunk_id": "guia_python_data_science.pdf_p4_c0"
+    }
+  },
+  {
+    "texto": "ignorar arquivos de dados e modelos treinados.\nTestes automatizados sao frequentemente ignorados em projetos de dados mas sao essenciais\nem producao. Teste funcoes de pre-processamento, validacoes de schema de dados e metricas\nminimas de performance dos modelos.",
+    "metadata": {
+      "arquivo": "guia_python_data_science.pdf",
+      "pagina": 4,
+      "chunk_id": "guia_python_data_science.pdf_p4_c1"
+    }
+  },
+  {
+    "texto": "Manual de Seguranca em APIs REST\nBoas praticas para desenvolvimento seguro de APIs\nVersao 3.0 | Equipe de Seguranca | Marco 2026",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 1,
+      "chunk_id": "manual_seguranca_apis.pdf_p1_c0"
+    }
+  },
+  {
+    "texto": "1. Introducao a Seguranca de APIs\nAPIs REST sao a espinha dorsal das aplicacoes modernas. Elas conectam sistemas, expoe\ndados e executam acoes criticas. Por isso, sao alvos frequentes de ataques. Uma API insegura\npode expor dados sensiveis de usuarios, permitir acoes nao autorizadas e comprometer sistemas\ninteiros.\nSegundo o relatorio OWASP API Security Top 10, as vulnerabilidades mais comuns em APIs\nincluem autorizacao quebrada em nivel de objeto, autenticacao fraca, exposicao excessiva de",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_seguranca_apis.pdf_p2_c0"
+    }
+  },
+  {
+    "texto": "dados e falta de limitacao de taxa de requisicoes (rate limiting).\n1.1 Principios Fundamentais de Seguranca\nO principio do menor privilegio determina que cada componente do sistema deve ter acesso\napenas ao minimo necessario para sua funcao. Aplique isso a tokens de API, permissoes de\nbanco de dados e acessos de servicos.\nDefense in depth (defesa em profundidade) e o principio de ter multiplas camadas de seguranca.",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_seguranca_apis.pdf_p2_c1"
+    }
+  },
+  {
+    "texto": "Mesmo que uma camada falhe, outras protegem o sistema. Nao dependa de uma unica medida\nde seguranca como unica barreira.\n2. Autenticacao e Autorizacao\nAutenticacao responde 'quem e voce?' e autorizacao responde 'o que voce pode fazer?'. Sao\nconceitos distintos e ambos essenciais. Uma API pode autenticar corretamente um usuario mas\nfalhar em verificar se ele tem permissao para acessar determinado recurso.\n2.1 JSON Web Tokens (JWT)",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_seguranca_apis.pdf_p2_c2"
+    }
+  },
+  {
+    "texto": "2.1 JSON Web Tokens (JWT)\nJWT e o padrao mais usado para autenticacao stateless em APIs REST. Um token JWT contem\ntres partes separadas por ponto: header (algoritmo de assinatura), payload (dados do usuario e\nclaims) e signature (assinatura criptografica que garante integridade).\nBoas praticas com JWT: use tempo de expiracao curto (15 a 60 minutos), implemente refresh\ntokens para renovacao, nunca armazene dados sensiveis no payload (ele e apenas encoded, nao",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_seguranca_apis.pdf_p2_c3"
+    }
+  },
+  {
+    "texto": "encriptado), e use algoritmos seguros como RS256 ou HS256.\n2.2 OAuth 2.0 e OpenID Connect\nOAuth 2.0 e o protocolo padrao para autorizacao delegada. Ele permite que usuarios concedam\nacesso a suas contas em um servico para uma aplicacao terceira sem compartilhar senha.\nOpenID Connect adiciona uma camada de autenticacao sobre OAuth 2.0.\nOs fluxos mais comuns sao: Authorization Code (para aplicacoes web com backend), PKCE (para",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_seguranca_apis.pdf_p2_c4"
+    }
+  },
+  {
+    "texto": "SPAs e apps mobile) e Client Credentials (para comunicacao machine-to-machine). Escolha o\nfluxo correto para cada caso de uso.",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_seguranca_apis.pdf_p2_c5"
+    }
+  },
+  {
+    "texto": "3. Protecao Contra Ataques Comuns\nAtaque\nDescricao\nProtecao\nSQL Injection\nInsercao de codigo SQL malicioso\nUse ORM ou queries parametrizadas\nXSS\nInjecao de scripts no cliente\nSanitize inputs, use CSP headers\nCSRF\nRequisicoes forjadas cross-site\nTokens CSRF, verificar Origin\nRate Limiting\nSobrecarga por excesso de requests\nLimite por IP e por usuario\nIDOR\nAcesso a recursos de outros usuarios Valide ownership em cada request\nMass Assignment\nAtribuicao em massa de campos",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_seguranca_apis.pdf_p3_c0"
+    }
+  },
+  {
+    "texto": "Mass Assignment\nAtribuicao em massa de campos\nUse DTOs e whitelist de campos\n3.1 Validacao e Sanitizacao de Inputs\nNunca confie em dados vindos do cliente. Toda entrada de dados deve ser validada quanto ao\ntipo, formato, tamanho e valor permitido. Use bibliotecas de validacao como Pydantic no Python\nou Joi no Node.js para definir schemas e validar automaticamente.\nSanitizacao remove ou escapa caracteres potencialmente perigosos. E diferente de validacao:",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_seguranca_apis.pdf_p3_c1"
+    }
+  },
+  {
+    "texto": "validacao rejeita dados invalidos, sanitizacao torna dados potencialmente perigosos seguros.\nAplique ambos em conjunto para maxima seguranca.\n4. Seguranca de Dados e Privacidade\nDados em transito devem sempre usar HTTPS com TLS 1.2 ou superior. Nunca permita\nconexoes HTTP em producao. Configure HSTS (HTTP Strict Transport Security) para forcear\nHTTPS e evitar downgrade attacks.\nDados em repouso sensiveis devem ser encriptados no banco de dados. Use hashing forte com",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_seguranca_apis.pdf_p3_c2"
+    }
+  },
+  {
+    "texto": "salt para senhas (bcrypt, Argon2 ou scrypt). Nunca armazene senhas em texto plano ou com MD5\ne SHA1 que sao considerados inseguros.\nLGPD e GDPR exigem que dados pessoais sejam coletados apenas com consentimento explicito,\nusados apenas para a finalidade declarada, armazenados pelo tempo minimo necessario e\ndeletados a pedido do titular. Implemente endpoints de exclusao de dados desde o inicio.\n5. Monitoramento e Logs de Seguranca",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_seguranca_apis.pdf_p3_c3"
+    }
+  },
+  {
+    "texto": "5. Monitoramento e Logs de Seguranca\nToda API em producao deve registrar: tentativas de autenticacao (sucesso e falha), acessos a\nendpoints sensiveis, erros 4xx e 5xx com contexto, mudancas em dados criticos e acessos fora\ndo padrao. Esses logs sao essenciais para detectar e investigar incidentes.\nConfigure alertas para comportamentos anomalos: muitas tentativas de login falhando (brute\nforce), acesso a recursos de muitos usuarios diferentes em pouco tempo (scraping), volume",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_seguranca_apis.pdf_p3_c4"
+    }
+  },
+  {
+    "texto": "anormal de requisicoes (DDoS) e acessos em horarios incomuns.",
+    "metadata": {
+      "arquivo": "manual_seguranca_apis.pdf",
+      "pagina": 4,
+      "chunk_id": "manual_seguranca_apis.pdf_p4_c0"
+    }
+  },
+  {
     "texto": "Manual Tecnico: Inteligencia Artificial\nAplicada\nConceitos Fundamentais e Arquiteturas Modernas\nVersao 1.0 | Marco 2026\nDepartamento de Tecnologia e Inovacao",
     "metadata": {
       "arquivo": "manual_tecnico_ia.pdf",

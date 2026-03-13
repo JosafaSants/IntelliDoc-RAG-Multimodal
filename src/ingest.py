@@ -3,14 +3,12 @@ import json
 import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+
 def extrair_texto_pdf(caminho_pdf):
     """Extrai todo o texto do PDF página por página."""
     doc = fitz.open(caminho_pdf)
     nome_arquivo = os.path.basename(caminho_pdf)
     paginas = []
-
-    print(f"📄 Processando: {nome_arquivo}")
-    print(f"   Total de páginas: {len(doc)}")
 
     for numero_pagina in range(len(doc)):
         texto = doc[numero_pagina].get_text()
@@ -52,25 +50,44 @@ def criar_chunks(paginas, chunk_size=500, chunk_overlap=50):
     return chunks
 
 
-def salvar_chunks(chunks, caminho_saida):
-    """Salva os chunks em JSON."""
-    with open(caminho_saida, 'w', encoding='utf-8') as f:
-        json.dump(chunks, f, ensure_ascii=False, indent=2)
-    print(f"✅ Chunks salvos em: {caminho_saida}")
+def processar_todos_pdfs(pasta_raw="data/raw", pasta_processed="data/processed"):
+    """Processa todos os PDFs de uma pasta e salva os chunks."""
+    pdfs = [f for f in os.listdir(pasta_raw) if f.endswith(".pdf")]
+
+    if not pdfs:
+        print("❌ Nenhum PDF encontrado em data/raw/")
+        return []
+
+    print(f"📂 {len(pdfs)} PDF(s) encontrado(s):\n")
+
+    todos_chunks = []
+
+    for pdf in pdfs:
+        caminho = os.path.join(pasta_raw, pdf)
+        paginas = extrair_texto_pdf(caminho)
+        chunks = criar_chunks(paginas)
+        todos_chunks.extend(chunks)
+        print(f"  ✅ {pdf}")
+        print(f"     Páginas: {len(paginas)} | Chunks: {len(chunks)}")
+
+    # Salva tudo em um único JSON
+    caminho_saida = os.path.join(pasta_processed, "chunks.json")
+    with open(caminho_saida, "w", encoding="utf-8") as f:
+        json.dump(todos_chunks, f, ensure_ascii=False, indent=2)
+
+    print(f"\n📊 Resumo Final:")
+    print(f"   PDFs processados : {len(pdfs)}")
+    print(f"   Total de chunks  : {len(todos_chunks)}")
+    print(f"   Arquivo gerado   : {caminho_saida}")
+
+    return todos_chunks
 
 
 if __name__ == "__main__":
-    caminho_pdf = "data/raw/manual_tecnico_ia.pdf"
-    caminho_saida = "data/processed/chunks.json"
+    chunks = processar_todos_pdfs()
 
-    paginas = extrair_texto_pdf(caminho_pdf)
-    chunks = criar_chunks(paginas)
-
-    print(f"   Chunks gerados: {len(chunks)}")
-
-    print("\n📋 Preview dos primeiros 2 chunks:")
-    for chunk in chunks[:2]:
-        print(f"\n--- Chunk (Página {chunk['metadata']['pagina']}) ---")
-        print(chunk['texto'][:200])
-
-    salvar_chunks(chunks, caminho_saida)
+    if chunks:
+        print(f"\n📋 Exemplo de chunk:")
+        print(f"   Arquivo : {chunks[5]['metadata']['arquivo']}")
+        print(f"   Página  : {chunks[5]['metadata']['pagina']}")
+        print(f"   Texto   : {chunks[5]['texto'][:150]}...")
