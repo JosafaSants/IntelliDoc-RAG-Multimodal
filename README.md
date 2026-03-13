@@ -6,7 +6,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![LangChain](https://img.shields.io/badge/LangChain-0.1+-1C3C3C?style=for-the-badge&logo=chainlink&logoColor=white)](https://langchain.com)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
 [![Pinecone](https://img.shields.io/badge/Pinecone-Vector_DB-00BFA5?style=for-the-badge)](https://pinecone.io)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Em_Desenvolvimento-orange?style=for-the-badge)]()
@@ -14,7 +14,7 @@
 <br/>
 
 > Ingere PDFs e imagens, transforma em embeddings semânticos, armazena em banco vetorial  
-> e responde perguntas com GPT-4 — com avaliação automática de fidelidade para evitar alucinações.
+> e responde perguntas com GPT-4o-mini — com avaliação automática de fidelidade para evitar alucinações.
 
 <br/>
 
@@ -30,21 +30,23 @@ O **IntelliDoc RAG Multimodal** é um sistema completo de *Retrieval-Augmented G
 
 O diferencial está no **pipeline de avaliação automática**: cada resposta é pontuada em métricas de *fidelidade*, *relevância* e *precisão de contexto* usando a biblioteca RAGAS, tornando o sistema auditável e confiável.
 
+> 📖 **Projeto de portfólio em construção** — desenvolvido do zero com documentação de cada decisão técnica e aprendizado. Acompanhe a evolução pelos [commits](../../commits) e [issues](../../issues).
+
 ---
 
 ## ✨ Funcionalidades
 
-| Funcionalidade | Descrição |
-|---|---|
-| 📄 **Ingestão de PDFs** | Extração de texto com metadados (página, seção) via PyMuPDF |
-| 🖼️ **OCR de Imagens** | Reconhecimento óptico de texto em imagens com Tesseract |
-| 🔢 **Embeddings Semânticos** | Vetorização com `text-embedding-3-small` da OpenAI |
-| 🗄️ **Banco Vetorial** | Armazenamento e busca por similaridade no Pinecone |
-| 🤖 **Respostas com GPT-4** | Geração de respostas fundamentadas no contexto recuperado |
-| 📊 **Avaliação RAGAS** | Métricas automáticas: faithfulness, answer relevancy, context precision |
-| 🛡️ **Anti-Alucinação** | Guardrails que bloqueiam respostas abaixo do threshold de fidelidade |
-| 💬 **Memória de Conversa** | Histórico de perguntas para contexto em conversas longas |
-| 🌐 **Interface Web** | Chat interativo via Streamlit com upload de documentos |
+| Funcionalidade | Descrição | Status |
+|---|---|---|
+| 📄 **Ingestão de PDFs** | Extração de texto com metadados via PyMuPDF | 🔄 Em breve |
+| 🖼️ **OCR de Imagens** | Reconhecimento óptico de texto com Tesseract | 🔄 Em breve |
+| 🔢 **Embeddings Semânticos** | Vetorização com `text-embedding-3-small` da OpenAI | 🔄 Em breve |
+| 🗄️ **Banco Vetorial** | Armazenamento e busca por similaridade no Pinecone | 🔄 Em breve |
+| 🤖 **Respostas com GPT-4o-mini** | Geração de respostas fundamentadas no contexto | ✅ Conectado |
+| 📊 **Avaliação RAGAS** | Métricas: faithfulness, answer relevancy, context precision | 🔄 Em breve |
+| 🛡️ **Anti-Alucinação** | Guardrails que bloqueiam respostas abaixo do threshold | 🔄 Em breve |
+| 💬 **Memória de Conversa** | Histórico para contexto em conversas longas | 🔄 Em breve |
+| 🌐 **Interface Web** | Chat interativo via Streamlit com upload de documentos | 🔄 Em breve |
 
 ---
 
@@ -65,7 +67,7 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
                                                            │
   💬 QUERY                🤖 GENERATION              🔍 RETRIEVAL
   ┌──────────┐           ┌──────────────┐           ┌──────────────┐
-  │ Pergunta │──Embed───▶│    GPT-4     │◀──Top-K───│    Busca     │
+  │ Pergunta │──Embed───▶│  GPT-4o-mini │◀──Top-K───│    Busca     │
   │  do User │           │  + Contexto  │           │  Semântica   │
   └──────────┘           └──────┬───────┘           └──────────────┘
                                 │
@@ -85,7 +87,7 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 |---|---|---|
 | Linguagem | Python | 3.10+ |
 | Orquestração IA | LangChain | 0.1+ |
-| LLM | OpenAI GPT-4 | latest |
+| LLM | OpenAI GPT-4o-mini | latest |
 | Embeddings | OpenAI text-embedding-3-small | latest |
 | Banco Vetorial | Pinecone | 3.0+ |
 | Parser PDF | PyMuPDF (fitz) | 1.23+ |
@@ -136,14 +138,14 @@ intellidoc-rag/
 
 - Python 3.10+
 - Tesseract OCR instalado no sistema ([guia de instalação](https://github.com/tesseract-ocr/tesseract))
-- Conta OpenAI com API Key
+- Conta OpenAI com API Key e créditos
 - Conta Pinecone com API Key
 
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/intellidoc-rag.git
-cd intellidoc-rag
+git clone https://github.com/JosafaSants/IntelliDoc-RAG-Multimodal.git
+cd IntelliDoc-RAG-Multimodal
 ```
 
 ### 2. Crie e ative o ambiente virtual
@@ -153,7 +155,7 @@ cd intellidoc-rag
 python -m venv venv
 
 # Ativar (Windows)
-venv\Scripts\activate
+venv\Scripts\Activate.ps1
 
 # Ativar (Mac/Linux)
 source venv/bin/activate
@@ -169,21 +171,19 @@ pip install -r requirements.txt
 
 ```bash
 # Copie o arquivo de exemplo
-cp .env.example .env
+copy .env.example .env
 
-# Edite o .env com suas chaves
+# Edite o .env com suas chaves reais
 OPENAI_API_KEY=sk-...
 PINECONE_API_KEY=...
 PINECONE_INDEX_NAME=intellidoc
 ```
 
-### 5. Execute a interface
+### 5. Execute o teste de conexão
 
 ```bash
-streamlit run src/app.py
+python src/test_api.py
 ```
-
-Acesse `http://localhost:8501` no navegador. 🎉
 
 ---
 
@@ -204,13 +204,23 @@ Respostas abaixo do threshold de **faithfulness** são bloqueadas automaticament
 
 ## 🗺️ Roadmap
 
-- [x] Estrutura inicial do projeto
-- [ ] **Fase 1** — Ambiente e configuração inicial
-- [ ] **Fase 2** — Pipeline de ingestão (PDF + OCR)
+- [x] **Fase 1** — Ambiente, Git, VS Code e API OpenAI conectada ✅
+- [ ] **Fase 2** — Pipeline de ingestão (PDF + OCR) 🔄
 - [ ] **Fase 3** — Embeddings e banco vetorial
 - [ ] **Fase 4** — Pipeline RAG completo
 - [ ] **Fase 5** — Avaliação RAGAS e anti-alucinação
 - [ ] **Fase 6** — Interface Streamlit e publicação
+
+---
+
+## 📝 Diário de Desenvolvimento
+
+### ✅ Fase 1 — Concluída em 13/03/2026
+- Ambiente Python configurado com `venv` no Windows
+- Estrutura de pastas e `.gitignore` criados
+- Variáveis de ambiente seguras com `python-dotenv`
+- Primeira chamada à API da OpenAI funcionando com `gpt-4o-mini`
+- Repositório publicado no GitHub
 
 ---
 
