@@ -1,0 +1,178 @@
+[
+  {
+    "texto": "Manual Tecnico: Inteligencia Artificial\nAplicada\nConceitos Fundamentais e Arquiteturas Modernas\nVersao 1.0 | Marco 2026\nDepartamento de Tecnologia e Inovacao",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 1,
+      "chunk_id": "manual_tecnico_ia.pdf_p1_c0"
+    }
+  },
+  {
+    "texto": "1. Introducao a Inteligencia Artificial\nA Inteligencia Artificial (IA) e um campo da ciencia da computacao dedicado ao\ndesenvolvimento de sistemas capazes de realizar tarefas que normalmente requerem\ninteligencia humana. Essas tarefas incluem reconhecimento de padroes, aprendizado,\nraciocinio, resolucao de problemas e compreensao de linguagem natural.\nNos ultimos anos, o avanço dos Large Language Models (LLMs) revolucionou a area,",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_tecnico_ia.pdf_p2_c0"
+    }
+  },
+  {
+    "texto": "permitindo que maquinas gerem texto coerente, respondam perguntas complexas e ate\nescrevam codigo de programacao. Modelos como GPT-4, Claude e Gemini sao exemplos\ndessa nova geracao de sistemas de IA.\n1.1 Historia Resumida da IA\nO conceito de IA foi formalizado na decada de 1950, quando Alan Turing propoe o famoso\nTeste de Turing para avaliar a inteligencia de uma maquina. Desde entao, a area passou por\nvarios ciclos de otimismo e desilusao, conhecidos como 'invernos da IA'.",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_tecnico_ia.pdf_p2_c1"
+    }
+  },
+  {
+    "texto": "O renascimento moderno da IA comecou com o aprendizado profundo (deep learning) em\n2012, quando redes neurais convolucionais superaram humanos no reconhecimento de\nimagens. A partir de 2017, com a introducao da arquitetura Transformer, os modelos de\nlinguagem passaram a dominar o campo.\n1.2 Tipos de Aprendizado de Maquina\nTipo\nDescricao\nExemplo\nSupervisionado\nAprende com dados rotulados\nClassificacao de emails\nNao Supervisionado\nEncontra padroes sem rotulos\nSegmentacao de clientes\nPor Reforco",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_tecnico_ia.pdf_p2_c2"
+    }
+  },
+  {
+    "texto": "Segmentacao de clientes\nPor Reforco\nAprende por tentativa e erro\nJogos e robotica\nAuto-supervisionado\nGera seus proprios rotulos\nLLMs como GPT-4",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 2,
+      "chunk_id": "manual_tecnico_ia.pdf_p2_c3"
+    }
+  },
+  {
+    "texto": "2. Modelos de Linguagem de Grande Escala (LLMs)\nOs Large Language Models (LLMs) sao redes neurais treinadas em enormes volumes de\ntexto para compreender e gerar linguagem humana. Eles funcionam como sistemas de\npredicao: dado um texto de entrada, o modelo prediz qual token (palavra ou parte de palavra)\ndeve vir a seguir.\n2.1 Arquitetura Transformer\nA arquitetura Transformer, introduzida no artigo 'Attention Is All You Need' em 2017, e a base",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_tecnico_ia.pdf_p3_c0"
+    }
+  },
+  {
+    "texto": "de todos os LLMs modernos. Seu componente principal e o mecanismo de atencao\n(attention), que permite ao modelo ponderar a importancia de cada parte do texto ao gerar\numa resposta.\nO mecanismo de Self-Attention calcula relacoes entre todos os tokens de uma sequencia\nsimultaneamente, permitindo capturar dependencias de longo alcance no texto — algo que\narquiteturas anteriores como RNNs e LSTMs tinham dificuldade em fazer.\n2.2 Principais LLMs do Mercado",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_tecnico_ia.pdf_p3_c1"
+    }
+  },
+  {
+    "texto": "2.2 Principais LLMs do Mercado\nGPT-4 da OpenAI: modelo multimodal capaz de processar texto e imagens. Utilizado via API\npara aplicacoes comerciais e tem capacidade de context window de ate 128.000 tokens.\nClaude da Anthropic: modelo focado em segurança e utilidade, com context window de\n200.000 tokens. Conhecido por seguir instrucoes complexas com alta fidelidade e menor taxa\nde alucinacoes.\nGemini do Google: modelo nativo multimodal treinado em texto, codigo, audio, imagem e",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_tecnico_ia.pdf_p3_c2"
+    }
+  },
+  {
+    "texto": "video. Integrado aos produtos do ecossistema Google como Workspace e Search.\n2.3 Limitacoes dos LLMs\nAlucinacoes: LLMs podem gerar informacoes falsas com alta confianca. Esse e um dos\nprincipais desafios da area e o motivo pelo qual sistemas RAG com avaliacao de fidelidade\nsao essenciais em aplicacoes criticas.\nConhecimento desatualizado: LLMs sao treinados com dados ate uma data de corte e nao\ntem acesso a informacoes recentes. Tecnicas como RAG e function calling resolvem essa",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_tecnico_ia.pdf_p3_c3"
+    }
+  },
+  {
+    "texto": "limitacao ao conectar o modelo a fontes externas de informacao.\nCusto computacional: treinar e executar LLMs requer hardware especializado e consome\ngrande quantidade de energia. Por isso, o uso eficiente via API e chunking otimizado sao\npraticas importantes em producao.",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 3,
+      "chunk_id": "manual_tecnico_ia.pdf_p3_c4"
+    }
+  },
+  {
+    "texto": "3. Retrieval-Augmented Generation (RAG)\nRAG e uma arquitetura que combina busca de informacao com geracao de texto. Em vez de\ndepender apenas do conhecimento interno do LLM, o sistema primeiro recupera documentos\nrelevantes de uma base de conhecimento e os usa como contexto para gerar a resposta.\n3.1 Por que usar RAG?\nRAG resolve tres problemas fundamentais dos LLMs: (1) conhecimento desatualizado, pois o\nbanco de dados pode ser atualizado sem retreinar o modelo; (2) alucinacoes, pois a resposta",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 4,
+      "chunk_id": "manual_tecnico_ia.pdf_p4_c0"
+    }
+  },
+  {
+    "texto": "e ancorada em documentos reais; (3) falta de dominio especifico, pois qualquer documento\npode ser ingerido.\n3.2 Componentes do Pipeline RAG\nIngestao: documentos (PDFs, paginas web, imagens) sao carregados e divididos em chunks\nmenores. Cada chunk e uma unidade de texto de tamanho adequado para ser processado\npelo modelo de embeddings, geralmente entre 200 e 1000 tokens.\nEmbeddings: cada chunk e convertido em um vetor numerico de alta dimensao por um",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 4,
+      "chunk_id": "manual_tecnico_ia.pdf_p4_c1"
+    }
+  },
+  {
+    "texto": "modelo de embeddings. Vetores semanticamente similares ficam proximos no espaco\nvetorial, permitindo busca por significado e nao apenas por palavras-chave.\nBanco Vetorial: os embeddings sao armazenados em um banco especializado como\nPinecone, Weaviate ou ChromaDB. Esses bancos sao otimizados para busca por\nsimilaridade de cosseno em milissegundos, mesmo com milhoes de vetores.\nRecuperacao: quando o usuario faz uma pergunta, ela tambem e convertida em embedding e",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 4,
+      "chunk_id": "manual_tecnico_ia.pdf_p4_c2"
+    }
+  },
+  {
+    "texto": "o banco retorna os K chunks mais similares. Tipicamente K=3 a K=10 dependendo do caso\nde uso.\nGeracao: os chunks recuperados sao inseridos no prompt junto com a pergunta original. O\nLLM usa esse contexto para gerar uma resposta fundamentada, citando as fontes quando\nconfigurado.\n3.3 Metricas de Avaliacao RAG\nFidelidade (Faithfulness): mede se a resposta gerada e fiel ao contexto recuperado. Uma\nresposta fiel nao contem informacoes que nao estejam presentes nos documentos",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 4,
+      "chunk_id": "manual_tecnico_ia.pdf_p4_c3"
+    }
+  },
+  {
+    "texto": "recuperados. Score ideal: acima de 0.80.\nRelevancia da Resposta (Answer Relevancy): mede se a resposta e relevante para a\npergunta feita. Uma resposta pode ser fiel ao contexto mas ainda assim nao responder o que",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 4,
+      "chunk_id": "manual_tecnico_ia.pdf_p4_c4"
+    }
+  },
+  {
+    "texto": "foi perguntado. Score ideal: acima de 0.75.\nPrecisao do Contexto (Context Precision): mede se os chunks recuperados sao realmente\nuteis para responder a pergunta. Um sistema RAG bem calibrado recupera contexto preciso\ne relevante. Score ideal: acima de 0.70.",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 5,
+      "chunk_id": "manual_tecnico_ia.pdf_p5_c0"
+    }
+  },
+  {
+    "texto": "4. Processamento de Documentos Tecnicos\nA qualidade do pipeline RAG depende diretamente da qualidade da ingestao dos\ndocumentos. Documentos mal processados geram chunks ruins, que produzem embeddings\nimprecisos, resultando em recuperacao de baixa qualidade e respostas ruins.\n4.1 Extracao de Texto de PDFs\nPDFs com texto seleccionavel podem ser processados com bibliotecas como PyMuPDF (fitz)\nou pdfplumber. PyMuPDF e mais rapido e preserva melhor a estrutura do documento,",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 6,
+      "chunk_id": "manual_tecnico_ia.pdf_p6_c0"
+    }
+  },
+  {
+    "texto": "incluindo informacoes de pagina, fonte e posicao do texto.\nPDFs escaneados (imagens) requerem OCR (Optical Character Recognition) antes da\nextracao. Tesseract e o motor de OCR open-source mais utilizado, com suporte a mais de\n100 idiomas incluindo portugues. A qualidade do OCR depende da resolucao e nitidez da\nimagem original.\n4.2 Estrategias de Chunking\nChunking por tamanho fixo: divide o texto em pedacos de N tokens com overlap de M tokens.",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 6,
+      "chunk_id": "manual_tecnico_ia.pdf_p6_c1"
+    }
+  },
+  {
+    "texto": "Simples e eficiente, mas pode cortar frases no meio. Recomendado: chunk_size=500,\nchunk_overlap=50.\nChunking semantico: divide o texto em blocos semanticamente coerentes, respeitando\nparagrafos e secoes. Produz chunks de melhor qualidade mas e mais complexo de\nimplementar. Ideal para documentos com estrutura clara como manuais e artigos.\nChunking hierarquico: cria uma hierarquia de chunks grandes (para recuperacao inicial) e",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 6,
+      "chunk_id": "manual_tecnico_ia.pdf_p6_c2"
+    }
+  },
+  {
+    "texto": "chunks pequenos (para resposta precisa). Melhora tanto recall quanto precision mas requer\nmais espaco de armazenamento.\n4.3 Metadados e Rastreabilidade\nCada chunk deve ser armazenado com metadados que permitam rastrear sua origem: nome\ndo arquivo, numero da pagina, secao, data de ingestao e hash do documento. Esses\nmetadados sao essenciais para citar fontes nas respostas e para auditoria do sistema.\n5. Glossario\nTermo\nDefinicao",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 6,
+      "chunk_id": "manual_tecnico_ia.pdf_p6_c3"
+    }
+  },
+  {
+    "texto": "Token\nUnidade minima de texto processada pelo LLM (palavra ou parte de palavra)\nEmbedding\nRepresentacao numerica vetorial do significado de um texto\nChunk\nFragmento de texto extraido de um documento para indexacao\nContext Window\nQuantidade maxima de tokens que o LLM processa de uma vez\nHallucination\nQuando o LLM gera informacao falsa com aparente confianca\nFine-tuning\nAjuste fino de um LLM pre-treinado para uma tarefa especifica\nRAG\nRetrieval-Augmented Generation: busca + geracao combinadas",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 7,
+      "chunk_id": "manual_tecnico_ia.pdf_p7_c0"
+    }
+  },
+  {
+    "texto": "Vector DB\nBanco de dados otimizado para busca por similaridade de vetores\nTop-K\nNumero de chunks mais similares recuperados na busca semantica",
+    "metadata": {
+      "arquivo": "manual_tecnico_ia.pdf",
+      "pagina": 7,
+      "chunk_id": "manual_tecnico_ia.pdf_p7_c1"
+    }
+  }
+]
