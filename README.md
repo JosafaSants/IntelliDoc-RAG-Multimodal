@@ -42,9 +42,9 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🔪 **Chunking Inteligente** | Divisão em chunks com overlap via LangChain | ✅ Concluído |
 | 🔢 **Embeddings Semânticos** | Vetorização com `text-embedding-3-small` da OpenAI | ✅ Concluído |
 | 🗄️ **Banco Vetorial Pinecone** | 63 vetores indexados, busca semântica funcionando | ✅ Concluído |
-| 🤖 **Conexão GPT-4o-mini** | Geração de respostas via API OpenAI | ✅ Concluído |
+| 🔗 **Pipeline RAG Completo** | Busca semântica + GPT-4o-mini integrados | ✅ Concluído |
+| 🛡️ **Respostas Honestas** | Sistema diz quando não encontra a informação | ✅ Concluído |
 | 🖼️ **OCR de Imagens** | Reconhecimento óptico de texto com Tesseract | 🔄 Em breve |
-| 🔗 **Pipeline RAG Completo** | Busca semântica + geração de resposta integradas | 🔄 Em breve |
 | 📊 **Avaliação RAGAS** | Métricas: faithfulness, answer relevancy, context precision | 🔄 Em breve |
 | 🛡️ **Anti-Alucinação** | Guardrails que bloqueiam respostas abaixo do threshold | 🔄 Em breve |
 | 💬 **Memória de Conversa** | Histórico para contexto em conversas longas | 🔄 Em breve |
@@ -67,18 +67,40 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
   │  Imagem  │─Tesseract─▶              │           │  ✅ 63 docs  │
   └──────────┘           └──────────────┘           └──────┬───────┘
                                                            │
-  💬 QUERY                🤖 GENERATION              🔍 RETRIEVAL
+  💬 QUERY                🤖 GENERATION ✅           🔍 RETRIEVAL ✅
   ┌──────────┐           ┌──────────────┐           ┌──────────────┐
   │ Pergunta │──Embed───▶│  GPT-4o-mini │◀──Top-K───│    Busca     │
   │  do User │           │  + Contexto  │           │  Semântica   │
   └──────────┘           └──────┬───────┘           └──────────────┘
                                 │
-  📊 EVALUATION           📤 OUTPUT
+  📊 EVALUATION           📤 OUTPUT ✅
   ┌──────────────┐       ┌──────────────┐
   │    RAGAS     │◀──────│   Resposta   │
   │  Faithfulness│       │ + Fontes     │
   │  Relevancy   │       │ + Score      │
   └──────────────┘       └──────────────┘
+```
+
+---
+
+## 💬 Exemplo de Uso
+
+```
+🔍 Pergunta: Quais são as boas práticas de segurança em APIs REST?
+
+1️⃣  Gerando embedding da pergunta...
+2️⃣  Buscando chunks relevantes no Pinecone... (5 chunks encontrados)
+3️⃣  Montando prompt com contexto...
+4️⃣  Gerando resposta com GPT-4o-mini...
+
+✅ RESPOSTA:
+As boas práticas de segurança em APIs REST incluem:
+1. Uso de JWT com tempo de expiração curto (15-60 min)
+2. Princípio do menor privilégio em todos os componentes
+3. Monitoramento e logs de tentativas de autenticação
+[Fonte: manual_seguranca_apis.pdf, páginas 2-3]
+
+📁 Fontes consultadas: ['manual_seguranca_apis.pdf']
 ```
 
 ---
@@ -120,7 +142,7 @@ intellidoc-rag/
 │   ├── ingest.py                 # ✅ Ingestão multi-PDF com chunking
 │   ├── embeddings.py             # ✅ Geração de embeddings OpenAI
 │   ├── vector_store.py           # ✅ Interface com Pinecone + busca semântica
-│   ├── rag_pipeline.py           # Pipeline RAG completo
+│   ├── rag_pipeline.py           # ✅ Pipeline RAG completo end-to-end
 │   ├── evaluation.py             # Métricas RAGAS
 │   └── app.py                    # Interface Streamlit
 │
@@ -154,14 +176,9 @@ cd IntelliDoc-RAG-Multimodal
 ### 2. Crie e ative o ambiente virtual
 
 ```bash
-# Criar venv com Python 3.11
 py -3.11 -m venv venv
-
-# Ativar (Windows)
-venv\Scripts\Activate.ps1
-
-# Ativar (Mac/Linux)
-source venv/bin/activate
+venv\Scripts\Activate.ps1    # Windows
+source venv/bin/activate      # Mac/Linux
 ```
 
 ### 3. Instale as dependências
@@ -177,17 +194,17 @@ copy .env.example .env
 # Edite o .env com suas chaves reais
 ```
 
-### 5. Ingira os documentos
+### 5. Execute o pipeline completo
 
 ```bash
-# Coloque PDFs em data/raw/ e execute:
+# 1. Ingira os documentos
 python src/ingest.py
-```
 
-### 6. Gere embeddings e indexe no Pinecone
-
-```bash
+# 2. Indexe no Pinecone
 python src/vector_store.py
+
+# 3. Faça perguntas!
+python src/rag_pipeline.py
 ```
 
 ---
@@ -210,25 +227,32 @@ O sistema avalia automaticamente cada resposta gerada:
 - [x] **Fase 1** — Ambiente, Git, VS Code e API OpenAI conectada ✅
 - [x] **Fase 2** — Pipeline de ingestão multi-PDF com chunking ✅
 - [x] **Fase 3** — Embeddings e banco vetorial Pinecone ✅
-- [ ] **Fase 4** — Pipeline RAG completo 🔄
-- [ ] **Fase 5** — Avaliação RAGAS e anti-alucinação
+- [x] **Fase 4** — Pipeline RAG completo end-to-end ✅
+- [ ] **Fase 5** — Avaliação RAGAS e anti-alucinação 🔄
 - [ ] **Fase 6** — Interface Streamlit e publicação
 
 ---
 
 ## 📝 Diário de Desenvolvimento
 
+### ✅ Fase 4 — Concluída em 13/03/2026
+- Pipeline RAG end-to-end funcionando: pergunta → embedding → busca → GPT-4o-mini → resposta
+- Prompt engineering com system prompt focado em fidelidade ao contexto
+- Citação automática de fontes (arquivo + página) em cada resposta
+- Sistema honesto: responde "Não encontrei essa informação" quando o contexto não cobre a pergunta
+- Temperatura 0.1 para respostas mais determinísticas e precisas
+- Testado com 3 perguntas cobrindo diferentes documentos do corpus
+
 ### ✅ Fase 3 — Concluída em 13/03/2026
 - Geração de embeddings com `text-embedding-3-small` da OpenAI (1536 dimensões)
 - Índice `intellidoc` criado no Pinecone (serverless, AWS us-east-1)
 - 63 vetores inseridos em 2 lotes via upsert
-- Busca semântica testada e funcionando — query retorna chunks relevantes por significado
+- Busca semântica testada e funcionando
 - Resolvido problema de certificado SSL em ambiente corporativo Windows
 
 ### ✅ Fase 2 — Concluída em 13/03/2026
 - Pipeline de ingestão de PDFs com PyMuPDF funcionando
 - Chunking inteligente com `RecursiveCharacterTextSplitter` do LangChain
-- Processamento em lote: todos os PDFs de `data/raw/` processados de uma vez
 - 4 documentos técnicos ingeridos → 63 chunks gerados com metadados
 
 ### ✅ Fase 1 — Concluída em 13/03/2026
@@ -236,7 +260,6 @@ O sistema avalia automaticamente cada resposta gerada:
 - Estrutura de pastas e `.gitignore` criados
 - Variáveis de ambiente seguras com `python-dotenv`
 - Primeira chamada à API da OpenAI funcionando com `gpt-4o-mini`
-- Repositório publicado no GitHub
 
 ---
 
