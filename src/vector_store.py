@@ -10,6 +10,64 @@ from pinecone import Pinecone, ServerlessSpec # Busca na biblioteca oficial do P
 from dotenv import load_dotenv 
 from embeddings import gerar_embeddings_chunks # Importa a função gerar_embeddings_chunks do script embeddings.py, que é responsável por carregar os chunks de texto processados e gerar os embeddings usando a API da OpenAI. Esses embeddings serão usados para inserir os vetores no banco vetorial do Pinecone e realizar buscas semânticas posteriormente.
 
+import hashlib
+import json
+import os
+
+CONTROLE_PATH = "data/processed/controle_ingestao.json"
+
+def calcular_hash_arquivo(caminho):
+    """Calcula o hash MD5 de um arquivo para detectar mudanças."""
+    hash_md5 = hashlib.md5()
+    with open(caminho, "rb") as f:
+        for bloco in iter(lambda: f.read(4096), b""):
+            hash_md5.update(bloco)
+    return hash_md5.hexdigest()
+
+
+def carregar_controle():
+    """Carrega o arquivo de controle de ingestão."""
+    if os.path.exists(CONTROLE_PATH):
+        with open(CONTROLE_PATH, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def salvar_controle(controle):
+    """Salva o arquivo de controle de ingestão."""
+    with open(CONTROLE_PATH, "w") as f:
+        json.dump(controle, f, indent=2)
+
+
+def filtrar_pdfs_alterados(pasta_raw="data/raw"):
+    """
+    Compara o hash atual dos PDFs com o controle salvo.
+    Retorna apenas os arquivos que foram adicionados ou alterados.
+    """
+    controle = carregar_controle()
+    pdfs_todos = [f for f in os.listdir(pasta_raw) if f.endswith(".pdf")]
+
+    novos_ou_alterados = []
+    sem_alteracao = []
+
+    for pdf in pdfs_todos:
+        caminho = os.path.join(pasta_raw, pdf)
+        hash_atual = calcular_hash_arquivo(caminho)
+
+        if pdf not in controle or controle[pdf] != hash_atual:
+            novos_ou_alterados.append(pdf)
+        else:
+            sem_alteracao.append(pdf)
+
+    print(f"📂 {len(pdfs_todos)} PDF(s) encontrado(s):")
+    for pdf in sem_alteracao:
+        print(f"  ⏭️  {pdf} — sem alterações, pulando")
+    for pdf in novos_ou_alterados:
+        status = "🆕 novo" if pdf not in controle else "♻️  alterado"
+        print(f"  {status} — {pdf}")
+
+    return novos_ou_alterados, controle
+
 load_dotenv()
 
 
@@ -59,25 +117,57 @@ def buscar(indice, embedding_query, top_k=5):
 
 
 if __name__ == "__main__":
-    # 1. Gera embeddings
-    chunks_com_embeddings = gerar_embeddings_chunks()
+    import sys
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from ingest import extrair_texto_pdf, criar_chunks
+    from embeddings import gerar_embeddings_chunks, gerar_embedding
 
-    # 2. Conecta ao Pinecone
-    indice = conectar_pinecone()
+    pasta_raw = "data/raw"
 
-    # 3. Insere os vetores
-    inserir_chunks(indice, chunks_com_embeddings)
+    # 1. Verifica quais PDFs foram alterados
+    pdfs_alterados, controle = filtrar_pdfs_alterados(pasta_raw)
 
-    # 4. Testa uma busca
-    from embeddings import gerar_embedding
+    if not pdfs_alterados:
+        print("\n✅ Nenhum arquivo novo ou alterado. Pinecone já está atualizado!")
+    else:
+        # 2. Processa apenas os PDFs alterados
+        todos_chunks = []
+        for pdf in pdfs_alterados:
+            caminho = os.path.join(pasta_raw, pdf)
+            paginas = extrair_texto_pdf(caminho)
+            chunks  = criar_chunks(paginas)
+            todos_chunks.extend(chunks)
+            print(f"  ✅ {pdf} → {len(chunks)} chunks gerados")
+
+        # 3. Gera embeddings
+        print(f"\n🔢 Gerando embeddings para {len(todos_chunks)} chunks...")
+        chunks_com_embeddings = gerar_embeddings_chunks()
+
+        # 4. Filtra apenas os chunks dos PDFs alterados
+        arquivos_alterados = set(pdfs_alterados)
+        chunks_filtrados = [
+            c for c in chunks_com_embeddings
+            if c["metadata"]["arquivo"] in arquivos_alterados
+        ]
+
+        # 5. Conecta e insere no Pinecone
+        indice = conectar_pinecone()
+        inserir_chunks(indice, chunks_filtrados)
+
+        # 6. Atualiza o controle com os novos hashes
+        for pdf in pdfs_alterados:
+            caminho = os.path.join(pasta_raw, pdf)
+            controle[pdf] = calcular_hash_arquivo(caminho)
+        salvar_controle(controle)
+        print(f"\n💾 Controle de ingestão atualizado!")
+
+    # 7. Testa busca semântica
     print("\n🔍 Testando busca semântica...")
-    query = "O que é RAG e como funciona?"
-    embedding_query = gerar_embedding(query)
-    resultados = buscar(indice, embedding_query, top_k=3)
-
-    print(f"\n📋 Top 3 resultados para: '{query}'")
+    indice = conectar_pinecone()
+    emb = gerar_embedding("O que é RAG e como funciona?")
+    resultados = buscar(indice, emb, top_k=3)
+    print(f"\n📋 Top 3 resultados:")
     for i, r in enumerate(resultados):
         print(f"\n  [{i+1}] Score: {r.score:.4f}")
         print(f"       Arquivo: {r.metadata['arquivo']}")
-        print(f"       Página : {r.metadata['pagina']}")
-        print(f"       Texto  : {r.metadata['texto'][:120]}...")
+        print(f"       Texto  : {r.metadata['texto'][:100]}...")

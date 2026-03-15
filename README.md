@@ -42,6 +42,7 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🔪 **Chunking Inteligente** | Divisão em chunks com overlap via LangChain | ✅ Concluído |
 | 🔢 **Embeddings Semânticos** | Vetorização com `text-embedding-3-small` da OpenAI | ✅ Concluído |
 | 🗄️ **Banco Vetorial Pinecone** | 63 vetores indexados, busca semântica funcionando | ✅ Concluído |
+| ⚡ **Ingestão Incremental** | Reprocessa apenas PDFs novos ou alterados via hash MD5 | ✅ Concluído |
 | 🔗 **Pipeline RAG Completo** | Busca semântica + GPT-4o-mini integrados | ✅ Concluído |
 | 🛡️ **Respostas Honestas** | Sistema diz quando não encontra a informação | ✅ Concluído |
 | 🖼️ **OCR de Imagens** | Reconhecimento óptico de texto com Tesseract | 🔄 Em breve |
@@ -61,10 +62,10 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 
   📂 INPUT                🔄 PROCESSING              🗄️ STORAGE
   ┌──────────┐           ┌──────────────┐           ┌──────────────┐
-  │   PDF    │──PyMuPDF──▶              │           │              │
-  └──────────┘           │   Chunking   │──Embed───▶│   Pinecone   │
+  │   PDF    │──PyMuPDF──▶  Hash MD5    │           │              │
+  └──────────┘           │  Chunking    │──Embed───▶│   Pinecone   │
   ┌──────────┐           │  + Metadata  │           │ Vector Store │
-  │  Imagem  │─Tesseract─▶              │           │  ✅ 63 docs  │
+  │  Imagem  │─Tesseract─▶  Incremental │           │  ✅ 63 docs  │
   └──────────┘           └──────────────┘           └──────┬───────┘
                                                            │
   💬 QUERY                🤖 GENERATION ✅           🔍 RETRIEVAL ✅
@@ -80,6 +81,24 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
   │  Relevancy   │       │ + Score      │
   └──────────────┘       └──────────────┘
 ```
+
+---
+
+## ⚡ Ingestão Incremental
+
+O sistema utiliza **hash MD5** para detectar mudanças nos documentos e evitar reprocessamento desnecessário:
+
+```
+1ª execução:               2ª execução (sem mudanças):
+─────────────────          ─────────────────────────────
+🆕 novo — doc1.pdf         ⏭️  doc1.pdf — sem alterações
+🆕 novo — doc2.pdf         ⏭️  doc2.pdf — sem alterações
+→ gera embeddings          → nenhuma chamada à API
+→ insere no Pinecone       → Pinecone já está atualizado!
+→ salva hashes             
+```
+
+Isso reduz custos de API e tempo de execução em reingestões. O arquivo `controle_ingestao.json` registra o hash de cada documento processado.
 
 ---
 
@@ -116,8 +135,9 @@ As boas práticas de segurança em APIs REST incluem:
 | Banco Vetorial | Pinecone | 8.1+ |
 | Parser PDF | PyMuPDF (fitz) | 1.27+ |
 | Chunking | LangChain Text Splitters | 0.1+ |
+| Deduplicação | Hash MD5 | built-in |
 | OCR | Tesseract + pytesseract | 5.0+ |
-| Avaliação | RAGAS | 0.1+ |
+| Avaliação | RAGAS | 0.4+ |
 | Interface | Streamlit | 1.30+ |
 | Gerenciamento env | python-dotenv | 1.0+ |
 
@@ -136,12 +156,13 @@ intellidoc-rag/
 ├── 📂 data/
 │   ├── raw/                      # PDFs e imagens originais
 │   └── processed/
-│       └── chunks.json           # 63 chunks extraídos com metadados ✅
+│       ├── chunks.json           # 63 chunks extraídos com metadados ✅
+│       └── controle_ingestao.json # Hashes MD5 para ingestão incremental ✅
 │
 ├── 📂 src/
 │   ├── ingest.py                 # ✅ Ingestão multi-PDF com chunking
 │   ├── embeddings.py             # ✅ Geração de embeddings OpenAI
-│   ├── vector_store.py           # ✅ Interface com Pinecone + busca semântica
+│   ├── vector_store.py           # ✅ Pinecone + ingestão incremental por hash
 │   ├── rag_pipeline.py           # ✅ Pipeline RAG completo end-to-end
 │   ├── evaluation.py             # Métricas RAGAS
 │   └── app.py                    # Interface Streamlit
@@ -200,7 +221,7 @@ copy .env.example .env
 # 1. Ingira os documentos
 python src/ingest.py
 
-# 2. Indexe no Pinecone
+# 2. Indexe no Pinecone (apenas PDFs novos ou alterados)
 python src/vector_store.py
 
 # 3. Faça perguntas!
@@ -235,13 +256,19 @@ O sistema avalia automaticamente cada resposta gerada:
 
 ## 📝 Diário de Desenvolvimento
 
+### 🔧 Melhoria: Ingestão Incremental — 15/03/2026
+- Identificado problema: sistema reprocessava todos os PDFs a cada execução mesmo sem alterações
+- Implementada detecção de mudanças via **hash MD5** de cada arquivo
+- Criado `controle_ingestao.json` como registro persistente dos hashes
+- Resultado: zero chamadas desnecessárias à API da OpenAI em reexecuções sem mudanças
+- Impacto direto na redução de custos e tempo de execução em produção
+
 ### ✅ Fase 4 — Concluída em 13/03/2026
 - Pipeline RAG end-to-end funcionando: pergunta → embedding → busca → GPT-4o-mini → resposta
 - Prompt engineering com system prompt focado em fidelidade ao contexto
 - Citação automática de fontes (arquivo + página) em cada resposta
 - Sistema honesto: responde "Não encontrei essa informação" quando o contexto não cobre a pergunta
 - Temperatura 0.1 para respostas mais determinísticas e precisas
-- Testado com 3 perguntas cobrindo diferentes documentos do corpus
 
 ### ✅ Fase 3 — Concluída em 13/03/2026
 - Geração de embeddings com `text-embedding-3-small` da OpenAI (1536 dimensões)
