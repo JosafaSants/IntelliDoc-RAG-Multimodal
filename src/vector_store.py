@@ -120,7 +120,7 @@ if __name__ == "__main__":
     import sys
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     from ingest import extrair_texto_pdf, criar_chunks
-    from embeddings import gerar_embeddings_chunks, gerar_embedding
+    from embeddings import gerar_embedding # Importamos apenas a operária
 
     pasta_raw = "data/raw"
 
@@ -139,33 +139,41 @@ if __name__ == "__main__":
             todos_chunks.extend(chunks)
             print(f"  ✅ {pdf} → {len(chunks)} chunks gerados")
 
-        # 3. Gera embeddings
+        # 3. Gera embeddings APENAS para os chunks alterados (Economia real!)
         print(f"\n🔢 Gerando embeddings para {len(todos_chunks)} chunks...")
-        chunks_com_embeddings = gerar_embeddings_chunks()
+        chunks_filtrados = []
+        
+        for i, chunk in enumerate(todos_chunks):
+            emb = gerar_embedding(chunk["texto"]) # Gasta API só no que é novo
+            chunks_filtrados.append({
+                "id": chunk["metadata"]["chunk_id"],
+                "values": emb,
+                "metadata": {
+                    "texto": chunk["texto"],
+                    "arquivo": chunk["metadata"]["arquivo"],
+                    "pagina": chunk["metadata"]["pagina"]
+                }
+            })
+            if (i + 1) % 10 == 0 or (i + 1) == len(todos_chunks):
+                print(f"   ✅ {i + 1}/{len(todos_chunks)} embeddings gerados")
 
-        # 4. Filtra apenas os chunks dos PDFs alterados
-        arquivos_alterados = set(pdfs_alterados)
-        chunks_filtrados = [
-            c for c in chunks_com_embeddings
-            if c["metadata"]["arquivo"] in arquivos_alterados
-        ]
-
-        # 5. Conecta e insere no Pinecone
+        # 4. Conecta e insere no Pinecone
         indice = conectar_pinecone()
         inserir_chunks(indice, chunks_filtrados)
 
-        # 6. Atualiza o controle com os novos hashes
+        # 5. Atualiza o controle com os novos hashes
         for pdf in pdfs_alterados:
             caminho = os.path.join(pasta_raw, pdf)
             controle[pdf] = calcular_hash_arquivo(caminho)
         salvar_controle(controle)
         print(f"\n💾 Controle de ingestão atualizado!")
 
-    # 7. Testa busca semântica
+    # 6. Testa busca semântica
     print("\n🔍 Testando busca semântica...")
     indice = conectar_pinecone()
     emb = gerar_embedding("O que é RAG e como funciona?")
     resultados = buscar(indice, emb, top_k=3)
+    
     print(f"\n📋 Top 3 resultados:")
     for i, r in enumerate(resultados):
         print(f"\n  [{i+1}] Score: {r.score:.4f}")
