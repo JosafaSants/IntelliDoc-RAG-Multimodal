@@ -42,9 +42,10 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🔪 **Chunking Inteligente** | Divisão em chunks com overlap via LangChain | ✅ Concluído |
 | 🔢 **Embeddings Semânticos** | Vetorização com `text-embedding-3-small` da OpenAI | ✅ Concluído |
 | 🗄️ **Banco Vetorial Pinecone** | 63 vetores indexados, busca semântica funcionando | ✅ Concluído |
-| ⚡ **Ingestão Incremental Otimizada** | Hash MD5 + embeddings gerados apenas para chunks novos/alterados | ✅ Concluído |
+| ⚡ **Ingestão Incremental Otimizada** | Hash MD5 + embeddings apenas para chunks novos/alterados | ✅ Concluído |
 | 🔗 **Pipeline RAG Completo** | Busca semântica + GPT-4o-mini integrados | ✅ Concluído |
 | 🛡️ **Respostas Honestas** | Sistema diz quando não encontra a informação | ✅ Concluído |
+| 📝 **Código Documentado** | Comentários detalhados em todos os módulos principais | 🔄 Em progresso |
 | 🖼️ **OCR de Imagens** | Reconhecimento óptico de texto com Tesseract | 🔄 Em breve |
 | 📊 **Avaliação RAGAS** | Métricas: faithfulness, answer relevancy, context precision | 🔄 Em breve |
 | 🛡️ **Anti-Alucinação** | Guardrails que bloqueiam respostas abaixo do threshold | 🔄 Em breve |
@@ -105,8 +106,6 @@ O sistema usa **hash MD5** para detectar mudanças e gera embeddings **apenas pa
 → gera embeddings APENAS dos chunks do doc1
 → atualiza apenas os vetores do doc1 no Pinecone
 ```
-
-> **Detalhe técnico:** a otimização opera no nível do chunk — a função `gerar_embedding()` é chamada diretamente apenas sobre os chunks dos arquivos alterados, em vez de chamar o pipeline completo que leria o `chunks.json` do disco (que contém todos os documentos).
 
 ---
 
@@ -171,9 +170,9 @@ intellidoc-rag/
 ├── 📂 src/
 │   ├── ingest.py                 # ✅ Ingestão multi-PDF com chunking
 │   ├── embeddings.py             # ✅ Geração de embeddings OpenAI
-│   ├── vector_store.py           # ✅ Pinecone + ingestão incremental otimizada
-│   ├── rag_pipeline.py           # ✅ Pipeline RAG completo end-to-end
-│   ├── evaluation.py             # Métricas RAGAS
+│   ├── vector_store.py           # ✅ Pinecone + ingestão incremental otimizada — comentado ✅
+│   ├── rag_pipeline.py           # ✅ Pipeline RAG completo end-to-end — comentado ✅
+│   ├── evaluation.py             # 🔄 Métricas RAGAS — comentários em progresso
 │   └── app.py                    # Interface Streamlit
 │
 ├── 📂 tests/
@@ -265,22 +264,26 @@ O sistema avalia automaticamente cada resposta gerada:
 
 ## 📝 Diário de Desenvolvimento
 
+### 📖 Documentação do Código — 15/03/2026
+- Comentários detalhados adicionados em `vector_store.py` — explicando hash MD5, certificados SSL, lógica de ingestão incremental e upsert no Pinecone
+- Comentários detalhados adicionados em `rag_pipeline.py` — explicando construção do prompt, busca semântica e geração com GPT-4o-mini
+- Comentários em progresso em `evaluation.py`
+- Abordagem de aprendizado: código copiado linha a linha para internalizar cada decisão técnica
+
 ### 🔧 Otimização: Ingestão Incremental v2 — 15/03/2026
-- Identificado vazamento de créditos: `gerar_embeddings_chunks()` lia o `chunks.json` completo do disco mesmo quando apenas 1 arquivo havia mudado, gerando embeddings para todos os documentos e descartando-os depois
+- Identificado vazamento de créditos: embeddings sendo gerados para todos os documentos mesmo quando apenas 1 havia mudado
 - Corrigido chamando `gerar_embedding()` diretamente sobre os chunks em memória dos arquivos alterados
-- Resultado: chamadas à API OpenAI proporcionais ao número de arquivos alterados, não ao total do corpus
+- Resultado: chamadas à API proporcionais ao número de arquivos alterados
 
 ### 🔧 Melhoria: Ingestão Incremental v1 — 15/03/2026
 - Implementada detecção de mudanças via hash MD5
 - Criado `controle_ingestao.json` como registro persistente
-- Sistema passa a pular arquivos não alterados
 
 ### ✅ Fase 4 — Concluída em 13/03/2026
 - Pipeline RAG end-to-end: pergunta → embedding → busca → GPT-4o-mini → resposta
 - Prompt engineering com foco em fidelidade ao contexto
 - Citação automática de fontes (arquivo + página)
 - Sistema honesto: responde "Não encontrei" quando contexto não cobre a pergunta
-- Temperatura 0.1 para respostas mais determinísticas
 
 ### ✅ Fase 3 — Concluída em 13/03/2026
 - Embeddings com `text-embedding-3-small` (1536 dimensões)

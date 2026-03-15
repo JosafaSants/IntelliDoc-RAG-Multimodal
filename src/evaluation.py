@@ -11,4 +11,8 @@ from vector_store import conectar_pinecone, buscar
 
 load_dotenv()
 
-def
+def coletar_dados_avaliacao(pergunta_resposta): # Define a função para coletar dados de avaliação
+    """
+    Roda o pipeline RAG para cada pergunta e coleta
+    os dado necessários para o RAGAS avaliar.
+    """
