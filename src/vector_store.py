@@ -10,33 +10,33 @@ from pinecone import Pinecone, ServerlessSpec # Busca na biblioteca oficial do P
 from dotenv import load_dotenv 
 from embeddings import gerar_embeddings_chunks # Importa a função gerar_embeddings_chunks do script embeddings.py, que é responsável por carregar os chunks de texto processados e gerar os embeddings usando a API da OpenAI. Esses embeddings serão usados para inserir os vetores no banco vetorial do Pinecone e realizar buscas semânticas posteriormente.
 
-import hashlib
-import json
+import hashlib # Biblioteca importada para auxiliar a verificar a atualização dos arquivos PDF
+import json # Biblioteca importada para manipular o arquivo de controle de ingestão
 import os
 
-CONTROLE_PATH = "data/processed/controle_ingestao.json"
+CONTROLE_PATH = "data/processed/controle_ingestao.json" # Define o caminho para o arquivo de controle de ingestão
 
 def calcular_hash_arquivo(caminho):
     """Calcula o hash MD5 de um arquivo para detectar mudanças."""
-    hash_md5 = hashlib.md5()
+    hash_md5 = hashlib.md5() # Cria um objeto de hash MD5 usando a função md5 da biblioteca hashlib, que será usado para calcular o hash do arquivo PDF.
     with open(caminho, "rb") as f:
-        for bloco in iter(lambda: f.read(4096), b""):
+        for bloco in iter(lambda: f.read(4096), b""): # Lê o arquivo em blocos de 4096 bytes usando um iterador, o que é eficiente para arquivos grandes, e atualiza o hash MD5 com cada bloco lido. Isso permite calcular o hash do arquivo completo sem precisar carregá-lo inteiro na memória.
             hash_md5.update(bloco)
-    return hash_md5.hexdigest()
+    return hash_md5.hexdigest() # Retorna o hash do arquivo em formato hexadecimal
 
 
 def carregar_controle():
     """Carrega o arquivo de controle de ingestão."""
-    if os.path.exists(CONTROLE_PATH):
+    if os.path.exists(CONTROLE_PATH): # Verifica se o arquivo de controle de ingestão existe
         with open(CONTROLE_PATH, "r") as f:
-            return json.load(f)
+            return json.load(f) # Se o arquivo existir, ele é aberto e seu conteúdo é carregado usando json.load, retornando um dicionário que mapeia os nomes dos arquivos PDF para seus respectivos hashes MD5. Isso permite comparar os hashes atuais dos arquivos PDF com os hashes armazenados no controle para detectar quais arquivos foram alterados ou adicionados.
     return {}
 
 
 def salvar_controle(controle):
     """Salva o arquivo de controle de ingestão."""
     with open(CONTROLE_PATH, "w") as f:
-        json.dump(controle, f, indent=2)
+        json.dump(controle, f, indent=2) # Salva o dicionário de controle de ingestão no arquivo especificado por CONTROLE_PATH, usando json.dump para escrever o dicionário em formato JSON com uma indentação de 2 espaços para facilitar a leitura. Isso atualiza o controle com os hashes atuais dos arquivos PDF, permitindo que futuras execuções do script possam detectar alterações ou adições nos arquivos PDF comparando os hashes atuais com os armazenados no controle.
 
 
 def filtrar_pdfs_alterados(pasta_raw="data/raw"):
@@ -44,14 +44,14 @@ def filtrar_pdfs_alterados(pasta_raw="data/raw"):
     Compara o hash atual dos PDFs com o controle salvo.
     Retorna apenas os arquivos que foram adicionados ou alterados.
     """
-    controle = carregar_controle()
-    pdfs_todos = [f for f in os.listdir(pasta_raw) if f.endswith(".pdf")]
+    controle = carregar_controle() # Usa a função definida anteriormente para carregar o arquivo de controle de ingestão
+    pdfs_todos = [f for f in os.listdir(pasta_raw) if f.endswith(".pdf")] # Lista os arquivos .pdf na pasta_raw
 
-    novos_ou_alterados = []
-    sem_alteracao = []
+    novos_ou_alterados = [] # Cria uma lista vazia para armazenar os arquivos que foram considerados como novos ou sofreram alterações.
+    sem_alteracao = [] # Cria uma lista vazi para armazenar os arquivos que não sofreram alterações
 
-    for pdf in pdfs_todos:
-        caminho = os.path.join(pasta_raw, pdf)
+    for pdf in pdfs_todos: # Faz o controle de ingestão dos arquivos PDF
+        caminho = os.path.join(pasta_raw, pdf) 
         hash_atual = calcular_hash_arquivo(caminho)
 
         if pdf not in controle or controle[pdf] != hash_atual:
@@ -94,11 +94,11 @@ def conectar_pinecone(): # Define a função conectar_pinecone, que é responsá
     return pc.Index(nome_indice)
 
 
-def inserir_chunks(indice, chunks_com_embeddings, batch_size=50):
+def inserir_chunks(indice, chunks_com_embeddings, batch_size=50): # Defini a função de carga no Pinecone e o tamanho do lote dessa carga.
     """Insere os chunks com embeddings no Pinecone em lotes."""
     print(f"\n📤 Enviando {len(chunks_com_embeddings)} vetores ao Pinecone...")
 
-    for i in range(0, len(chunks_com_embeddings), batch_size):
+    for i in range(0, len(chunks_com_embeddings), batch_size): 
         lote = chunks_com_embeddings[i:i + batch_size]
         indice.upsert(vectors=lote)
         print(f"   ✅ Lote {i // batch_size + 1} enviado ({len(lote)} vetores)")
