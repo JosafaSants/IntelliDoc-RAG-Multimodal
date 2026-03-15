@@ -98,20 +98,20 @@ def inserir_chunks(indice, chunks_com_embeddings, batch_size=50): # Defini a fun
     """Insere os chunks com embeddings no Pinecone em lotes."""
     print(f"\n📤 Enviando {len(chunks_com_embeddings)} vetores ao Pinecone...")
 
-    for i in range(0, len(chunks_com_embeddings), batch_size): 
-        lote = chunks_com_embeddings[i:i + batch_size]
-        indice.upsert(vectors=lote)
+    for i in range(0, len(chunks_com_embeddings), batch_size): # Divide o chunks_com_embedding em lotes dos tamanhos definidos por batch_size.
+        lote = chunks_com_embeddings[i:i + batch_size] # Seleciona o lote atual de chunks com embeddings para serem inseridos no Pinecone.
+        indice.upsert(vectors=lote) # Usa o método upsert do índice do Pinecone para inserir ou atualizar os vetores do lote atual. O método upsert é eficiente para lidar com inserções em massa, permitindo que os vetores sejam adicionados ao índice de forma rápida e sem a necessidade de verificar individualmente se cada vetor já existe.
         print(f"   ✅ Lote {i // batch_size + 1} enviado ({len(lote)} vetores)")
 
     print(f"\n🎉 Todos os vetores inseridos!")
 
 
-def buscar(indice, embedding_query, top_k=5):
+def buscar(indice, embedding_query, top_k=5): # Define a função de busca semântica, que recebe o índice do Pinecone, o embedding da query e o número de resultados mais similares a serem retornados (top_k). Essa função utiliza o método query do índice do Pinecone para buscar os vetores mais similares ao embedding da query, retornando os resultados com suas respectivas metadados, como o texto original do chunk e o nome do arquivo de onde ele foi extraído. A busca semântica é fundamental para permitir que os usuários encontrem informações relevantes mesmo que as palavras exatas não estejam presentes na query, baseando-se na similaridade dos significados representados pelos embeddings.
     """Busca os chunks mais similares a uma query."""
     resultado = indice.query(
-        vector=embedding_query,
-        top_k=top_k,
-        include_metadata=True
+        vector=embedding_query, # Embedding da query que buscara no banco do Pinecone os vetores mais similares.
+        top_k=top_k, # Retorna apena os resultado mais similares devinidos por top_k.
+        include_metadata=True # Retorna os metadados dos vetores encontrados.
     )
     return resultado.matches
 
