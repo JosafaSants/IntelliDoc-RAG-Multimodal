@@ -49,11 +49,11 @@ def coletar_dados_avaliacao(pergunta_resposta): # Define a função para coletar
 
         #Retorna os dados no formato esperado pelo RAGAS
     return {
-        "question": perguntas,
-        "answer": respostas,
-        "context":contextos,
-        "ground_truth": ground_truths
-    }
+    "question": perguntas,
+    "answer": respostas,
+    "retrieved_contexts": contextos,
+    "ground_truth": ground_truths
+}
 
 def avaliar_com_ragas(dados): # Define a função que executa a avaliação usando as métricas do RAGAS
     """ Avalia o pipeline RAG usando as métricas do RAGAS."""
@@ -88,47 +88,54 @@ def avaliar_com_ragas(dados): # Define a função que executa a avaliação usan
 
     return resultado
 
-def exibir_relatorio(resultado): # Define uma função para exibir um relatório final dos resultados de forma visual.
-    """Exibe o relatório de avaliação de forma clara"""
-    print("\n" + "=" * 60)
-    print("📊 Relatório de Avaliação RAGAS - IntelliDoc RAG")
-    print("=" * 60)
+def exibir_relatorio(resultado):
+    """Exibe o relatório de avaliação de forma clara."""
+    print("\n" + "═" * 60)
+    print("📋 RELATÓRIO DE AVALIAÇÃO — IntelliDoc RAG")
+    print("═" * 60)
 
-    # Extração dos resultados e métricas da avaliação
+    # Extrai os scores — RAGAS 0.4 retorna listas, então calculamos a média
     scores = {
-        "Faithfulness": resultado["faithfulness"],
-        "Answer Relevancy": resultado["answer_relevancy"],
-        "Context Precision": resultado["context_precision"],
-        "Context Recall": resultado["context_recall"]
+        "Faithfulness":      sum(resultado["faithfulness"]) / len(resultado["faithfulness"]),
+        "Answer Relevancy":  sum(resultado["answer_relevancy"]) / len(resultado["answer_relevancy"]),
+        "Context Precision": sum(resultado["context_precision"]) / len(resultado["context_precision"]),
+        "Context Recall":    sum(resultado["context_recall"]) / len(resultado["context_recall"]),
     }
 
-    # Define os valores aceitaveis para cada métrica
+    # Define os thresholds mínimos aceitáveis para cada métrica
     thresholds = {
-        "Faithfulness": 0.80,
-        "Answer Relevancy": 0.75,
+        "Faithfulness":      0.80,
+        "Answer Relevancy":  0.75,
         "Context Precision": 0.70,
-        "Context Recall": 0.70,
+        "Context Recall":    0.70,
     }
 
     for metrica, score in scores.items():
         threshold = thresholds[metrica]
-        status = "✅ Aceitável" if score >= threshold else "❌ Insatisfatório"
-        barra = "█" * int(score * 20) # Barra visual para representar o resultado, cada 5% corresponde a um bloco cheio
-        print(f"\n {status} {metrica}: {score:.4f} {barra:<20} (min: {threshold})")
+        if score != score:  # Verifica se é NaN (NaN != NaN é sempre True)
+            print(f"\n  ⚠️  {metrica:<20}: N/A  (timeout na avaliação)")
+            continue
+        status = "✅" if score >= threshold else "⚠️"
+        barra  = "█" * int(score * 20)
+        print(f"\n  {status} {metrica:<20}: {score:.4f}  [{barra:<20}]  (mín: {threshold})")
 
-    # Faz o calculo da média geral dos score
-    media = sum(scores.values()) / len(scores)
+    # Calcula média ignorando NaN
+    scores_validos = [s for s in scores.values() if s == s]
+    media = sum(scores_validos) / len(scores_validos) if scores_validos else 0
+
+
     print(f"\n{'─' * 60}")
     print(f"  🎯 Score Médio Geral: {media:.4f}")
     print("═" * 60)
 
-    # Armazenando o resiltado do relatório em um JSON para analises futuras
-    relatorio = {k.strip(): round(v, 4) for k, v in scores.items()}
+    # Salva o relatório em JSON para histórico e análise futura
+    relatorio = {k: round(v, 4) for k, v in scores.items()}
     relatorio["media_geral"] = round(media, 4)
     with open("data/processed/relatorio_ragas.json", "w") as f:
         json.dump(relatorio, f, indent=2)
     print("\n💾 Relatório salvo em data/processed/relatorio_ragas.json")
 
+    
 
 if __name__ == "__main__":
     # Dataset de avaliação: 5 pares de pergunta e resposta esperada (gabarito)
