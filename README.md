@@ -21,7 +21,6 @@
 
 ![Interface IntelliDoc](docs/demo_interface.png)
 
-> 📸 *Screenshot real da interface em breve*
 
 </div>
 
