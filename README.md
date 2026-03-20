@@ -8,17 +8,20 @@
 [![LangChain](https://img.shields.io/badge/LangChain-0.1+-1C3C3C?style=for-the-badge&logo=chainlink&logoColor=white)](https://langchain.com)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
 [![Pinecone](https://img.shields.io/badge/Pinecone-Vector_DB-00BFA5?style=for-the-badge)](https://pinecone.io)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.55+-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Em_Desenvolvimento-orange?style=for-the-badge)]()
+[![Status](https://img.shields.io/badge/Status-v1.0_Publicado-brightgreen?style=for-the-badge)]()
 
 <br/>
 
-> Ingere PDFs e imagens, transforma em embeddings semânticos, armazena em banco vetorial  
+> Ingere PDFs técnicos, transforma em embeddings semânticos, armazena em banco vetorial  
 > e responde perguntas com GPT-4o-mini — com avaliação automática de fidelidade para evitar alucinações.
 
 <br/>
 
-![Demo](https://placehold.co/900x400/1a1a2e/4fc3f7?text=🎬+Demo+em+breve&font=montserrat)
+![Demo](https://placehold.co/900x480/0d1117/58a6ff?text=🧠+IntelliDoc+RAG+—+Interface+Streamlit&font=montserrat)
+
+> 📸 *Screenshot real da interface em breve*
 
 </div>
 
@@ -26,108 +29,119 @@
 
 ## 📌 O que é este projeto?
 
-O **IntelliDoc RAG Multimodal** é um sistema completo de *Retrieval-Augmented Generation* (RAG) que permite fazer perguntas em linguagem natural sobre qualquer documento técnico — PDFs ou imagens com texto — e receber respostas precisas, fundamentadas e com citação da fonte.
+O **IntelliDoc RAG Multimodal** é um sistema completo de *Retrieval-Augmented Generation* (RAG) que permite fazer perguntas em linguagem natural sobre documentos técnicos e receber respostas precisas, fundamentadas e com citação da fonte.
 
-O diferencial está no **pipeline de avaliação automática**: cada resposta é pontuada em métricas de *fidelidade*, *relevância* e *precisão de contexto* usando a biblioteca RAGAS, tornando o sistema auditável e confiável.
+O sistema avalia automaticamente cada resposta com métricas de *fidelidade*, *relevância* e *precisão de contexto* usando a biblioteca RAGAS, tornando as respostas auditáveis e confiáveis.
 
-> 📖 **Projeto de portfólio em construção** — desenvolvido do zero com documentação de cada decisão técnica e aprendizado. Acompanhe a evolução pelos [commits](../../commits) e [issues](../../issues).
+> 📖 **Projeto de portfólio** — construído do zero, passo a passo, com documentação de cada decisão técnica. Acompanhe a evolução pelos [commits](../../commits) e [issues](../../issues).
 
 ---
 
-## ✨ Funcionalidades
+## ⚠️ Status das Funcionalidades
 
-| Funcionalidade | Descrição | Status |
+> **Este projeto está em evolução contínua.**
+> A **v1.0** cobre o pipeline completo com PDFs via interface web.
+> O suporte a **imagens com OCR** está planejado para a **v1.1** e será implementado em breve.
+
+| Funcionalidade | Descrição | Versão |
 |---|---|---|
-| 📄 **Ingestão de PDFs** | Extração de texto com metadados via PyMuPDF | ✅ Concluído |
-| 🔪 **Chunking Inteligente** | Divisão em chunks com overlap via LangChain | ✅ Concluído |
-| 🔢 **Embeddings Semânticos** | Vetorização com `text-embedding-3-small` da OpenAI | ✅ Concluído |
-| 🗄️ **Banco Vetorial Pinecone** | 63 vetores indexados, busca semântica funcionando | ✅ Concluído |
-| ⚡ **Ingestão Incremental Otimizada** | Hash MD5 + embeddings apenas para chunks novos/alterados | ✅ Concluído |
-| 🔗 **Pipeline RAG Completo** | Busca semântica + GPT-4o-mini integrados | ✅ Concluído |
-| 🛡️ **Respostas Honestas** | Sistema diz quando não encontra a informação | ✅ Concluído |
-| 📝 **Código Documentado** | Comentários detalhados em todos os módulos principais | 🔄 Em progresso |
-| 🖼️ **OCR de Imagens** | Reconhecimento óptico de texto com Tesseract | 🔄 Em breve |
-| 📊 **Avaliação RAGAS** | Métricas: faithfulness, answer relevancy, context precision | 🔄 Em breve |
-| 🛡️ **Anti-Alucinação** | Guardrails que bloqueiam respostas abaixo do threshold | 🔄 Em breve |
-| 💬 **Memória de Conversa** | Histórico para contexto em conversas longas | 🔄 Em breve |
-| 🌐 **Interface Web** | Chat interativo via Streamlit com upload de documentos | 🔄 Em breve |
+| 📄 **Ingestão de PDFs** | Extração de texto com metadados via PyMuPDF | ✅ v1.0 |
+| 🔪 **Chunking Inteligente** | Divisão com overlap via LangChain TextSplitter | ✅ v1.0 |
+| 🔢 **Embeddings Semânticos** | Vetorização com `text-embedding-3-small` | ✅ v1.0 |
+| ⚡ **Ingestão Incremental** | Hash MD5 — processa apenas arquivos novos/alterados | ✅ v1.0 |
+| 🗄️ **Banco Vetorial** | 63+ vetores no Pinecone, busca semântica | ✅ v1.0 |
+| 🔗 **Pipeline RAG** | Busca semântica + GPT-4o-mini integrados | ✅ v1.0 |
+| 🛡️ **Respostas Honestas** | Diz quando não encontra a informação | ✅ v1.0 |
+| 📊 **Avaliação RAGAS** | 4 métricas automáticas de qualidade | ✅ v1.0 |
+| 🌐 **Interface Streamlit** | Upload, chat, gestão de docs e scores RAGAS | ✅ v1.0 |
+| 🖼️ **OCR de Imagens** | Extração de texto de imagens via Tesseract | 🔜 **v1.1** |
+| 💬 **Memória Persistente** | Histórico entre sessões | 🔜 **v1.1** |
+| 🚀 **Deploy em Nuvem** | Streamlit Cloud ou Hugging Face Spaces | 🔜 **v1.1** |
 
 ---
 
-## 🏗️ Arquitetura
+## 🏗️ Arquitetura do Sistema
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    IntelliDoc RAG Multimodal                 │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                     IntelliDoc RAG Multimodal                     │
+└──────────────────────────────────────────────────────────────────┘
 
-  📂 INPUT                🔄 PROCESSING              🗄️ STORAGE
-  ┌──────────┐           ┌──────────────┐           ┌──────────────┐
-  │   PDF    │──PyMuPDF──▶  Hash MD5    │           │              │
-  └──────────┘           │  Chunking    │──Embed───▶│   Pinecone   │
-  ┌──────────┐           │  + Metadata  │  (apenas  │ Vector Store │
-  │  Imagem  │─Tesseract─▶  Incremental │  novos)   │  ✅ 63 docs  │
-  └──────────┘           └──────────────┘           └──────┬───────┘
-                                                           │
-  💬 QUERY                🤖 GENERATION ✅           🔍 RETRIEVAL ✅
-  ┌──────────┐           ┌──────────────┐           ┌──────────────┐
-  │ Pergunta │──Embed───▶│  GPT-4o-mini │◀──Top-K───│    Busca     │
-  │  do User │           │  + Contexto  │           │  Semântica   │
-  └──────────┘           └──────┬───────┘           └──────────────┘
-                                │
-  📊 EVALUATION           📤 OUTPUT ✅
-  ┌──────────────┐       ┌──────────────┐
-  │    RAGAS     │◀──────│   Resposta   │
-  │  Faithfulness│       │ + Fontes     │
-  │  Relevancy   │       │ + Score      │
-  └──────────────┘       └──────────────┘
+  📂 INPUT               🔄 PROCESSING             🗄️ STORAGE
+  ┌──────────┐          ┌──────────────┐          ┌──────────────┐
+  │   PDF    │─PyMuPDF─▶│  Hash MD5    │          │              │
+  └──────────┘          │  Chunking    │─Embed───▶│   Pinecone   │
+  ┌──────────┐          │  +Metadata   │  (novos) │  Vector DB   │
+  │  Imagem  │─[v1.1]──▶│  OCR [v1.1] │          │              │
+  └──────────┘          └──────────────┘          └──────┬───────┘
+                                                         │
+  💬 QUERY ✅            🤖 GENERATION ✅          🔍 RETRIEVAL ✅
+  ┌──────────┐          ┌──────────────┐          ┌──────────────┐
+  │ Pergunta │─Embed───▶│ GPT-4o-mini  │◀─Top-K───│    Busca     │
+  └──────────┘          │ + Contexto   │          │  Semântica   │
+                        └──────┬───────┘          └──────────────┘
+                               │
+  📊 EVALUATION ✅       📤 OUTPUT ✅
+  ┌──────────────┐      ┌──────────────┐
+  │    RAGAS     │◀─────│   Resposta   │
+  │  Score 0.81  │      │  + Fontes    │
+  └──────────────┘      └──────────────┘
 ```
 
 ---
 
-## ⚡ Ingestão Incremental Otimizada
+## 📊 Resultados da Avaliação RAGAS
 
-O sistema usa **hash MD5** para detectar mudanças e gera embeddings **apenas para os chunks novos ou alterados**, eliminando desperdício de créditos de API:
+| Métrica | Score | Threshold | Status |
+|---|---|---|---|
+| **Faithfulness** | 0.9333 | ≥ 0.80 | ✅ |
+| **Answer Relevancy** | 0.9334 | ≥ 0.75 | ✅ |
+| **Context Precision** | 0.8000 | ≥ 0.70 | ✅ |
+| **Context Recall** | 0.5857 | ≥ 0.70 | ⚠️ Melhora com mais docs |
+| **Score Médio** | **0.8131** | ≥ 0.75 | ✅ |
+
+> O Context Recall abaixo do threshold é esperado com corpus pequeno (4 documentos). Adicionar mais PDFs ao sistema aumenta diretamente esse score.
+
+---
+
+## 🖥️ Interface Streamlit
+
+A interface web permite usar o sistema completo sem linha de comando:
+
+**Sidebar:**
+- `📤 Enviar Documentos` — upload de PDFs com indexação automática
+- `📚 Documentos Carregados` — lista com opção de deletar cada arquivo
+- `⚙️ Sistema & Avaliação RAGAS` — estatísticas e scores de qualidade
+
+**Área principal:**
+- Chat interativo com histórico da sessão
+- Respostas formatadas com citação das fontes
+- Botão para limpar o histórico
+
+---
+
+## ⚡ Ingestão Incremental
+
+O sistema usa **hash MD5** para detectar mudanças e gera embeddings **apenas para chunks novos ou alterados**:
 
 ```
-1ª execução:               2ª execução (sem mudanças):
-─────────────────          ──────────────────────────────────
-🆕 novo — doc1.pdf         ⏭️  doc1.pdf — sem alterações
-🆕 novo — doc2.pdf         ⏭️  doc2.pdf — sem alterações
-→ extrai chunks            → nenhuma extração
-→ gera embeddings          → nenhuma chamada à API OpenAI
-→ insere no Pinecone       → Pinecone já está atualizado!
-→ salva hashes
+1ª execução:                  2ª execução (sem mudanças):
+──────────────────────        ────────────────────────────────
+🆕 novo  — doc1.pdf           ⏭️  doc1.pdf — sem alterações
+🆕 novo  — doc2.pdf           ⏭️  doc2.pdf — sem alterações
+→ gera embeddings             → zero chamadas à API OpenAI
+→ insere no Pinecone          → Pinecone já está atualizado!
+→ salva hashes MD5
 
 3ª execução (doc1 alterado):
-────────────────────────────
-⏭️  doc2.pdf — sem alterações, pulando
+─────────────────────────────
+⏭️  doc2.pdf — sem alterações
 ♻️  doc1.pdf — alterado
-→ gera embeddings APENAS dos chunks do doc1
-→ atualiza apenas os vetores do doc1 no Pinecone
+→ embeddings APENAS do doc1
+→ atualiza só os vetores do doc1
 ```
 
----
-
-## 💬 Exemplo de Uso
-
-```
-🔍 Pergunta: Quais são as boas práticas de segurança em APIs REST?
-
-1️⃣  Gerando embedding da pergunta...
-2️⃣  Buscando chunks relevantes no Pinecone... (5 chunks encontrados)
-3️⃣  Montando prompt com contexto...
-4️⃣  Gerando resposta com GPT-4o-mini...
-
-✅ RESPOSTA:
-As boas práticas de segurança em APIs REST incluem:
-1. Uso de JWT com tempo de expiração curto (15-60 min)
-2. Princípio do menor privilégio em todos os componentes
-3. Monitoramento e logs de tentativas de autenticação
-[Fonte: manual_seguranca_apis.pdf, páginas 2-3]
-
-📁 Fontes consultadas: ['manual_seguranca_apis.pdf']
-```
+> **Detalhe técnico:** a otimização opera no nível do chunk — `gerar_embedding()` é chamada diretamente sobre os chunks dos arquivos alterados, evitando reprocessar o corpus inteiro. Identificado e implementado durante revisão de código.
 
 ---
 
@@ -135,18 +149,18 @@ As boas práticas de segurança em APIs REST incluem:
 
 | Categoria | Tecnologia | Versão |
 |---|---|---|
-| Linguagem | Python | 3.11 ✅ |
+| Linguagem | Python | 3.11 |
+| Interface | Streamlit | 1.55+ |
 | Orquestração IA | LangChain | 0.1+ |
 | LLM | OpenAI GPT-4o-mini | latest |
-| Embeddings | OpenAI text-embedding-3-small | latest |
-| Banco Vetorial | Pinecone | 8.1+ |
+| Embeddings | text-embedding-3-small | latest |
+| Banco Vetorial | Pinecone (serverless) | 8.1+ |
 | Parser PDF | PyMuPDF (fitz) | 1.27+ |
 | Chunking | LangChain Text Splitters | 0.1+ |
 | Deduplicação | Hash MD5 | built-in |
-| OCR | Tesseract + pytesseract | 5.0+ |
+| OCR | Tesseract + pytesseract | 🔜 v1.1 |
 | Avaliação | RAGAS | 0.4+ |
-| Interface | Streamlit | 1.30+ |
-| Gerenciamento env | python-dotenv | 1.0+ |
+| Env vars | python-dotenv | 1.0+ |
 
 ---
 
@@ -155,34 +169,27 @@ As boas práticas de segurança em APIs REST incluem:
 ```
 intellidoc-rag/
 │
-├── 📄 README.md                  # Este arquivo
-├── 📋 requirements.txt           # Dependências Python
-├── 📄 LICENSE                    # Licença MIT
-├── 🔒 .env.example               # Modelo de variáveis de ambiente
-├── 🚫 .gitignore                 # Ignora .env, venv, __pycache__
+├── 📄 README.md
+├── 📋 requirements.txt
+├── 📄 LICENSE
+├── 🔒 .env.example
+├── 🚫 .gitignore
+├── 🔧 fix_ssl.py              # Correção de SSL corporativo Windows
 │
 ├── 📂 data/
-│   ├── raw/                      # PDFs e imagens originais
+│   ├── raw/                   # PDFs e imagens originais
 │   └── processed/
-│       ├── chunks.json           # 63 chunks extraídos com metadados ✅
-│       └── controle_ingestao.json # Hashes MD5 para ingestão incremental ✅
+│       ├── chunks.json            # Chunks extraídos com metadados
+│       ├── controle_ingestao.json # Hashes MD5 — ingestão incremental
+│       └── relatorio_ragas.json   # Scores da avaliação RAGAS
 │
-├── 📂 src/
-│   ├── ingest.py                 # ✅ Ingestão multi-PDF com chunking
-│   ├── embeddings.py             # ✅ Geração de embeddings OpenAI
-│   ├── vector_store.py           # ✅ Pinecone + ingestão incremental otimizada — comentado ✅
-│   ├── rag_pipeline.py           # ✅ Pipeline RAG completo end-to-end — comentado ✅
-│   ├── evaluation.py             # 🔄 Métricas RAGAS — comentários em progresso
-│   └── app.py                    # Interface Streamlit
-│
-├── 📂 tests/
-│   └── test_pipeline.py          # Testes automatizados
-│
-├── 📂 notebooks/
-│   └── exploration.ipynb         # Experimentos e protótipos
-│
-└── 📂 docs/
-    └── architecture.md           # Documentação da arquitetura
+└── 📂 src/
+    ├── ingest.py          # ✅ Ingestão multi-PDF com chunking
+    ├── embeddings.py      # ✅ Embeddings via OpenAI
+    ├── vector_store.py    # ✅ Pinecone + ingestão incremental
+    ├── rag_pipeline.py    # ✅ Pipeline RAG end-to-end
+    ├── evaluation.py      # ✅ Avaliação RAGAS
+    └── app.py             # ✅ Interface Streamlit
 ```
 
 ---
@@ -190,7 +197,6 @@ intellidoc-rag/
 ## 🚀 Como Executar
 
 ### Pré-requisitos
-
 - Python 3.11
 - Conta OpenAI com API Key e créditos
 - Conta Pinecone com API Key
@@ -202,7 +208,7 @@ git clone https://github.com/JosafaSants/IntelliDoc-RAG-Multimodal.git
 cd IntelliDoc-RAG-Multimodal
 ```
 
-### 2. Crie e ative o ambiente virtual
+### 2. Ambiente virtual
 
 ```bash
 py -3.11 -m venv venv
@@ -223,109 +229,94 @@ copy .env.example .env
 # Edite o .env com suas chaves reais
 ```
 
-### 5. Execute o pipeline completo
+### 5. (Redes corporativas) Corrija o SSL
 
 ```bash
-# 1. Ingira os documentos
-python src/ingest.py
-
-# 2. Indexe no Pinecone (apenas PDFs novos ou alterados)
-python src/vector_store.py
-
-# 3. Faça perguntas!
-python src/rag_pipeline.py
+python fix_ssl.py
 ```
 
----
+### 6. Indexe os documentos
 
-## 📊 Métricas de Avaliação (RAGAS)
+```bash
+# Coloque PDFs em data/raw/ e execute:
+python src/vector_store.py
+```
 
-O sistema avalia automaticamente cada resposta gerada:
+### 7. Inicie a interface
 
-| Métrica | Descrição | Threshold |
-|---|---|---|
-| **Faithfulness** | A resposta é fiel ao contexto recuperado? | ≥ 0.80 |
-| **Answer Relevancy** | A resposta é relevante para a pergunta? | ≥ 0.75 |
-| **Context Precision** | O contexto recuperado é preciso? | ≥ 0.70 |
-| **Context Recall** | Todo contexto necessário foi recuperado? | ≥ 0.70 |
+```bash
+streamlit run src/app.py
+# Acesse http://localhost:8501
+```
 
 ---
 
 ## 🗺️ Roadmap
 
-- [x] **Fase 1** — Ambiente, Git, VS Code e API OpenAI conectada ✅
-- [x] **Fase 2** — Pipeline de ingestão multi-PDF com chunking ✅
+- [x] **Fase 1** — Ambiente, Git e API OpenAI ✅
+- [x] **Fase 2** — Ingestão multi-PDF com chunking ✅
 - [x] **Fase 3** — Embeddings e banco vetorial Pinecone ✅
-- [x] **Fase 4** — Pipeline RAG completo end-to-end ✅
-- [ ] **Fase 5** — Avaliação RAGAS e anti-alucinação 🔄
-- [ ] **Fase 6** — Interface Streamlit e publicação
+- [x] **Fase 4** — Pipeline RAG end-to-end ✅
+- [x] **Fase 5** — Avaliação RAGAS — score médio 0.81 ✅
+- [x] **Fase 6** — Interface Streamlit completa ✅ — **v1.0 publicada!**
+- [ ] **Fase 7** — OCR de imagens com Tesseract 🔜 v1.1
+- [ ] **Fase 8** — Deploy em nuvem 🔜 v1.1
 
 ---
 
 ## 📝 Diário de Desenvolvimento
 
-### 📖 Documentação do Código — 15/03/2026
-- Comentários detalhados adicionados em `vector_store.py` — explicando hash MD5, certificados SSL, lógica de ingestão incremental e upsert no Pinecone
-- Comentários detalhados adicionados em `rag_pipeline.py` — explicando construção do prompt, busca semântica e geração com GPT-4o-mini
-- Comentários em progresso em `evaluation.py`
-- Abordagem de aprendizado: código copiado linha a linha para internalizar cada decisão técnica
+### ✅ Fase 6 — v1.0 publicada
+- Interface Streamlit dark mode com sidebar funcional
+- Gestão completa de documentos: upload, listagem e deleção
+- Chat interativo com histórico e citação de fontes
+- Painel de scores RAGAS visível na interface
+- Botão de limpar histórico do chat
 
-### 🔧 Otimização: Ingestão Incremental v2 — 15/03/2026
-- Identificado vazamento de créditos: embeddings sendo gerados para todos os documentos mesmo quando apenas 1 havia mudado
-- Corrigido chamando `gerar_embedding()` diretamente sobre os chunks em memória dos arquivos alterados
-- Resultado: chamadas à API proporcionais ao número de arquivos alterados
+### ✅ Fase 5 — Avaliação RAGAS
+- Faithfulness: **0.93** · Answer Relevancy: **0.93** · Score médio: **0.81**
+- Relatório salvo em JSON e exibido na interface
 
-### 🔧 Melhoria: Ingestão Incremental v1 — 15/03/2026
-- Implementada detecção de mudanças via hash MD5
-- Criado `controle_ingestao.json` como registro persistente
+### ✅ Fase 4 — Pipeline RAG
+- Busca semântica + GPT-4o-mini integrados end-to-end
+- Citação automática de fontes em cada resposta
+- Sistema honesto — responde "Não encontrei" quando necessário
 
-### ✅ Fase 4 — Concluída em 13/03/2026
-- Pipeline RAG end-to-end: pergunta → embedding → busca → GPT-4o-mini → resposta
-- Prompt engineering com foco em fidelidade ao contexto
-- Citação automática de fontes (arquivo + página)
-- Sistema honesto: responde "Não encontrei" quando contexto não cobre a pergunta
+### ✅ Fase 3 — Embeddings e Pinecone
+- 63 vetores de 1536 dimensões indexados
+- Resolvido SSL corporativo Windows via exportação de certificados
 
-### ✅ Fase 3 — Concluída em 13/03/2026
-- Embeddings com `text-embedding-3-small` (1536 dimensões)
-- Índice `intellidoc` no Pinecone (serverless, AWS us-east-1)
-- 63 vetores inseridos, busca semântica funcionando
-- Resolvido SSL corporativo no Windows
+### ✅ Fase 2 — Ingestão de PDFs
+- 4 documentos técnicos → 63 chunks com metadados
 
-### ✅ Fase 2 — Concluída em 13/03/2026
-- Ingestão multi-PDF com PyMuPDF
-- Chunking com `RecursiveCharacterTextSplitter`
-- 4 documentos → 63 chunks com metadados
+### ✅ Fase 1 — Fundações
+- Python 3.11, venv, .gitignore, .env, API OpenAI funcionando
 
-### ✅ Fase 1 — Concluída em 13/03/2026
-- Ambiente Python 3.11 com `venv` no Windows
-- Estrutura, `.gitignore` e `.env` configurados
-- Primeira chamada à API OpenAI com `gpt-4o-mini`
+### 🔧 Melhorias identificadas durante o desenvolvimento
+- **Ingestão incremental v1** — hash MD5 para detectar mudanças
+- **Ingestão incremental v2** — embeddings gerados apenas para chunks alterados, eliminando desperdício de créditos de API *(identificado e corrigido pelo desenvolvedor)*
 
 ---
 
 ## 🧑‍💻 Sobre o Desenvolvimento
 
-Este projeto está sendo construído do zero como portfólio de aprendizado em **IA aplicada e Engenharia de Software**. Cada fase documenta decisões técnicas, problemas encontrados e aprendizados — tornando o repositório não apenas um produto final, mas um registro de evolução real.
-
-Se você também está aprendendo, fique à vontade para acompanhar o progresso pelas [Issues](../../issues) e [commits](../../commits).
+Construído do zero como portfólio de aprendizado em **IA aplicada e Engenharia de Software**. O repositório documenta não apenas o produto final, mas a jornada de aprendizado — com decisões técnicas, problemas encontrados e melhorias propostas pelo próprio desenvolvedor.
 
 ---
 
 ## 🤝 Contribuições
 
-Contribuições, sugestões e feedbacks são bem-vindos!
-
 1. Fork o projeto
 2. Crie sua branch: `git checkout -b feat/minha-feature`
-3. Commit suas mudanças: `git commit -m 'feat: adiciona nova feature'`
-4. Push para a branch: `git push origin feat/minha-feature`
+3. Commit: `git commit -m 'feat: descrição'`
+4. Push: `git push origin feat/minha-feature`
 5. Abra um Pull Request
 
 ---
 
 ## 📄 Licença
 
-Distribuído sob a licença MIT. Veja [LICENSE](LICENSE) para mais informações.
+Distribuído sob a licença MIT. Veja [LICENSE](LICENSE).
 
 ---
 
@@ -333,6 +324,6 @@ Distribuído sob a licença MIT. Veja [LICENSE](LICENSE) para mais informações
 
 Feito com 🧠 e muito café
 
-⭐ Se este projeto te ajudou, deixe uma estrela no repositório!
+⭐ Se este projeto te ajudou, deixe uma estrela!
 
 </div>
