@@ -36,3 +36,28 @@ def pre_processar_imagem(caminho_imagem):
     img = img.filter(ImageFilter.SHARPEN)
 
     return img
+
+def extrair_texto_imagem(caminho_imagem):
+    """
+    Extrai texto de uma imagem usando OCR com Tesseract.
+    Retorna o texto extraído como string
+    """
+    nome_arquivo = os.path.basename(caminho_imagem)
+    print(f"🖼️  Processando imagem: {nome_arquivo}")
+
+    # Chama a função definida acima que pré-precessa a imagem
+    img = pre_processar_imagem(caminho_imagem)
+
+    # Executando o OCR
+    # lang="por+eng" → tenta português primeiro, depois inglês para determinar o que esta escrito
+    texto = pytesseract.image_to_string(
+        img,
+        lang= "por+eng",
+        config= "--psm 3" # Modo automatico de segmentação de pagina. Analisa a imagem inteira automaticamente, detecta colunas, parágrafos e linhas sozinho
+    )
+
+    texto_limpo = "\n".join(
+        linha for linha in texto.splitlines() if linha.strip()
+    )
+    # Vamos remover linhas em branco e espaços desnecessarios
+    # O splitlines() vai dividir o texto em uma lista de linhas
