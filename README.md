@@ -19,7 +19,7 @@
 
 <br/>
 
-![Demo](https://placehold.co/900x480/0d1117/58a6ff?text=🧠+IntelliDoc+RAG+—+Interface+Streamlit&font=montserrat)
+![Interface IntelliDoc](docs/demo_interface.png)
 
 > 📸 *Screenshot real da interface em breve*
 

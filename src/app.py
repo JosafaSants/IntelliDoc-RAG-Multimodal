@@ -17,191 +17,266 @@ from rag_pipeline import rag_query # Insere a função definida em rag_pipeline.
 load_dotenv()
 
 # ════════════════════════════════════════════════════════════════════
-# CONFIGURAÇÃO DA PÁGINA — PRIMEIRA LINHA OBRIGATÓRIA DO STREAMLIT
+# CONFIGURAÇÃO DA PÁGINA
 # ════════════════════════════════════════════════════════════════════
 st.set_page_config(
     page_title="IntelliDoc RAG",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="expanded"   # sidebar SEMPRE começa aberta
+    initial_sidebar_state="expanded"
 )
-
+ 
 # ════════════════════════════════════════════════════════════════════
-# CSS — estiliza componentes NATIVOS do Streamlit
-# Regra: zero HTML dentro de containers. Só componentes nativos.
+# CSS — Estilização global via variáveis CSS
+#
+# REGRA DE OURO: dentro de sidebar/expanders usar APENAS componentes
+# nativos do Streamlit (st.metric, st.progress, st.caption, st.text,
+# st.columns, st.button, st.divider). HTML customizado via
+# st.markdown só na área principal, onde renderiza sem bugs.
 # ════════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
-
-* { font-family: 'JetBrains Mono', monospace !important; }
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+ 
+:root {
+    --bg-deep:       #0a0e14;
+    --bg-surface:    #111820;
+    --bg-elevated:   #171d27;
+    --border-subtle: #1e2733;
+    --border-mid:    #2a3545;
+    --accent:        #3b82f6;
+    --accent-glow:   rgba(59,130,246,0.12);
+    --text-primary:  #d4dae3;
+    --text-secondary:#5c6a7a;
+    --text-muted:    #3a4553;
+    --green:         #22c55e;
+    --yellow:        #eab308;
+    --red:           #ef4444;
+    --font-display:  'Rajdhani', sans-serif;
+    --font-body:     'IBM Plex Mono', 'JetBrains Mono', monospace;
+}
+ 
+* { font-family: var(--font-body) !important; }
 #MainMenu, footer, header { visibility: hidden !important; }
 .stDeployButton { display: none !important; }
-
-/* Fundo geral */
-.stApp { background-color: #0d1117 !important; }
-
-/* Sidebar */
+ 
+/* ── App background ──────────────────────────────────── */
+.stApp {
+    background: var(--bg-deep) !important;
+}
+ 
+/* ── Sidebar ─────────────────────────────────────────── */
 [data-testid="stSidebar"] {
-    background-color: #161b22 !important;
-    border-right: 1px solid #21262d !important;
-    min-width: 260px !important;
+    background: var(--bg-surface) !important;
+    border-right: 1px solid var(--border-subtle) !important;
 }
 [data-testid="stSidebar"] > div:first-child {
     padding: 1rem 0.9rem !important;
 }
-
-/* FORÇA a sidebar a ficar visível — impede colapso automático */
 [data-testid="stSidebar"][aria-expanded="false"] {
     margin-left: 0 !important;
     transform: none !important;
 }
-
-/* Expanders na sidebar */
+ 
+/* ── Expanders ───────────────────────────────────────── */
 [data-testid="stExpander"] {
-    background: #0d1117 !important;
-    border: 1px solid #21262d !important;
-    border-radius: 6px !important;
+    background: var(--bg-deep) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 8px !important;
     margin-bottom: 6px !important;
 }
 [data-testid="stExpander"] summary {
-    font-family: 'Rajdhani', sans-serif !important;
+    font-family: var(--font-display) !important;
     font-weight: 700 !important;
-    font-size: 0.78rem !important;
+    font-size: 0.74rem !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.1em !important;
-    color: #8b949e !important;
-    padding: 8px 10px !important;
+    letter-spacing: 0.12em !important;
+    color: var(--text-secondary) !important;
+    padding: 9px 11px !important;
 }
-[data-testid="stExpander"] summary:hover { color: #58a6ff !important; }
-[data-testid="stExpander"] summary svg { color: #484f58 !important; }
-
-/* Métricas */
+[data-testid="stExpander"] summary:hover {
+    color: var(--accent) !important;
+}
+ 
+/* ── Metrics ─────────────────────────────────────────── */
 [data-testid="stMetric"] {
-    background: #161b22 !important;
-    border: 1px solid #21262d !important;
-    border-radius: 6px !important;
-    padding: 8px 10px !important;
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 8px !important;
+    padding: 10px 12px !important;
 }
 [data-testid="stMetricValue"] {
-    color: #58a6ff !important;
-    font-family: 'Rajdhani', sans-serif !important;
+    color: var(--accent) !important;
+    font-family: var(--font-display) !important;
     font-size: 1.5rem !important;
     font-weight: 700 !important;
 }
 [data-testid="stMetricLabel"] {
-    color: #484f58 !important;
-    font-size: 0.62rem !important;
+    color: var(--text-muted) !important;
+    font-size: 0.6rem !important;
     text-transform: uppercase !important;
     letter-spacing: 0.08em !important;
 }
-
-/* Botões */
+[data-testid="stMetricDelta"] {
+    font-family: var(--font-display) !important;
+    font-weight: 600 !important;
+}
+ 
+/* ── Buttons ─────────────────────────────────────────── */
 .stButton > button {
-    background: #21262d !important;
-    color: #58a6ff !important;
-    border: 1px solid #30363d !important;
+    background: var(--bg-elevated) !important;
+    color: var(--accent) !important;
+    border: 1px solid var(--border-mid) !important;
     border-radius: 6px !important;
-    font-family: 'Rajdhani', sans-serif !important;
+    font-family: var(--font-display) !important;
     font-weight: 700 !important;
-    font-size: 0.85rem !important;
+    font-size: 0.82rem !important;
     letter-spacing: 0.06em !important;
-    transition: all 0.15s !important;
+    text-transform: uppercase !important;
+    transition: all 0.15s ease !important;
     width: 100% !important;
+    padding: 0.4rem 0.8rem !important;
 }
 .stButton > button:hover {
-    background: #30363d !important;
-    border-color: #58a6ff !important;
-    color: #79c0ff !important;
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 20px var(--accent-glow) !important;
     transform: translateY(-1px) !important;
 }
-
-/* Chat messages */
+ 
+/* ── Chat ────────────────────────────────────────────── */
 [data-testid="stChatMessage"] {
-    background: #161b22 !important;
-    border: 1px solid #21262d !important;
-    border-radius: 8px !important;
-    margin-bottom: 6px !important;
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 10px !important;
+    margin-bottom: 8px !important;
 }
 [data-testid="stChatMessageContent"] p {
-    color: #e6edf3 !important;
+    color: var(--text-primary) !important;
     line-height: 1.7 !important;
+    font-size: 0.88rem !important;
 }
-
-/* Campo de input */
 [data-testid="stChatInput"] textarea {
-    background: #161b22 !important;
-    border: 1px solid #30363d !important;
-    color: #e6edf3 !important;
-    border-radius: 8px !important;
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-mid) !important;
+    color: var(--text-primary) !important;
+    border-radius: 10px !important;
+    font-size: 0.88rem !important;
 }
 [data-testid="stChatInput"]:focus-within textarea {
-    border-color: #58a6ff !important;
-    box-shadow: 0 0 0 3px rgba(88,166,255,0.1) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-glow) !important;
 }
-
-/* Progress bars */
+ 
+/* ── Progress bars ───────────────────────────────────── */
 [data-testid="stProgressBar"] {
-    background: #21262d !important;
+    background: var(--bg-elevated) !important;
     border-radius: 4px !important;
-    height: 6px !important;
+    height: 5px !important;
     margin: 2px 0 8px 0 !important;
 }
 [data-testid="stProgressBar"] > div > div {
-    background: linear-gradient(90deg, #58a6ff, #388bfd) !important;
+    background: linear-gradient(90deg, var(--accent), #60a5fa) !important;
     border-radius: 4px !important;
 }
-
-/* File uploader */
+ 
+/* ── File uploader ───────────────────────────────────── */
 [data-testid="stFileUploadDropzone"] {
-    background: #0d1117 !important;
-    border: 1px dashed #30363d !important;
-    border-radius: 6px !important;
-}
-[data-testid="stFileUploadDropzone"]:hover {
-    border-color: #58a6ff !important;
-}
-
-/* Divider */
-hr { border-color: #21262d !important; margin: 8px 0 !important; }
-
-/* Captions */
-.stCaption p { color: #484f58 !important; font-size: 0.7rem !important; }
-
-/* Alert/info boxes */
-[data-testid="stAlert"] {
-    background: #161b22 !important;
-    border: 1px solid #21262d !important;
+    background: var(--bg-deep) !important;
+    border: 1px dashed var(--border-mid) !important;
     border-radius: 8px !important;
 }
-[data-testid="stAlert"] p { color: #8b949e !important; }
+[data-testid="stFileUploadDropzone"]:hover {
+    border-color: var(--accent) !important;
+}
+ 
+/* ── Misc ────────────────────────────────────────────── */
+hr { border-color: var(--border-subtle) !important; margin: 8px 0 !important; }
+.stCaption p { color: var(--text-secondary) !important; font-size: 0.68rem !important; }
+[data-testid="stAlert"] {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 10px !important;
+}
+[data-testid="stAlert"] p { color: var(--text-secondary) !important; }
+.stSpinner > div { color: var(--accent) !important; }
+ 
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+ 
+/* ── Welcome card (área principal, HTML seguro) ──────── */
+.welcome-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    max-width: 560px;
+    margin: 2.5rem auto;
+}
+.welcome-box h2 {
+    font-family: var(--font-display) !important;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.4rem 0;
+}
+.welcome-box .sub {
+    color: var(--text-secondary);
+    font-size: 0.78rem; margin-bottom: 1.3rem; line-height: 1.5;
+}
+.welcome-box .chip {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px; padding: 9px 14px;
+    color: var(--text-secondary); font-size: 0.74rem;
+    margin-bottom: 5px; text-align: left;
+}
+.welcome-box .chip:hover {
+    border-color: var(--accent); color: var(--text-primary);
+}
+ 
+/* ── Header (área principal) ─────────────────────────── */
+.hdr-title {
+    font-family: var(--font-display) !important;
+    font-size: 1.7rem; font-weight: 700;
+    color: var(--text-primary); line-height: 1.1;
+}
+.hdr-accent { color: var(--accent); }
+.hdr-sub {
+    font-size: 0.7rem; color: var(--text-muted);
+    letter-spacing: 0.04em; margin-top: 2px;
+}
 </style>
 """, unsafe_allow_html=True)
-
-
+ 
+ 
 # ════════════════════════════════════════════════════════════════════
-# FUNÇÕES AUXILIARES
+# FUNÇÕES AUXILIARES — lógica preservada do original
 # ════════════════════════════════════════════════════════════════════
-
+ 
 def listar_pdfs():
     """Retorna lista ordenada dos PDFs em data/raw/."""
     pasta = "data/raw"
     if not os.path.exists(pasta):
         return []
     return sorted([f for f in os.listdir(pasta) if f.endswith(".pdf")])
-
-
+ 
+ 
 def deletar_pdf(nome):
     """Apaga o PDF do disco e remove seu hash do controle de ingestão."""
     caminho = os.path.join("data", "raw", nome)
     if os.path.exists(caminho):
-        os.remove(caminho)              # Remove arquivo físico
-    controle = carregar_controle()      # Carrega hashes salvos
+        os.remove(caminho)
+    controle = carregar_controle()
     if nome in controle:
-        del controle[nome]              # Remove a entrada do dicionário
-        salvar_controle(controle)       # Persiste no disco
-
-
+        del controle[nome]
+        salvar_controle(controle)
+ 
+ 
 def contar_chunks():
     """Conta chunks em data/processed/chunks.json."""
     path = os.path.join("data", "processed", "chunks.json")
@@ -209,8 +284,8 @@ def contar_chunks():
         return 0
     with open(path, "r", encoding="utf-8") as f:
         return len(json.load(f))
-
-
+ 
+ 
 def carregar_relatorio():
     """Carrega relatorio_ragas.json. Retorna None se não existir."""
     path = os.path.join("data", "processed", "relatorio_ragas.json")
@@ -218,35 +293,33 @@ def carregar_relatorio():
         return None
     with open(path, "r") as f:
         return json.load(f)
-
-
+ 
+ 
 def processar_uploads(uploads):
     """
     Salva PDFs em data/raw/ e indexa apenas novos/alterados (hash MD5).
     Retorna (quantidade_indexada, mensagem).
     """
-    # Salva cada arquivo enviado
     for arq in uploads:
         destino = os.path.join("data", "raw", arq.name)
         with open(destino, "wb") as f:
-            f.write(arq.getbuffer())       # Binário do arquivo
-
-    controle     = carregar_controle()     # Hashes anteriores
-    indice       = conectar_pinecone()     # Conexão Pinecone
+            f.write(arq.getbuffer())
+ 
+    controle     = carregar_controle()
+    indice       = conectar_pinecone()
     novos_chunks = []
     pdfs_novos   = []
-
+ 
     for pdf in listar_pdfs():
         caminho    = os.path.join("data", "raw", pdf)
-        hash_atual = calcular_hash_arquivo(caminho)   # MD5 atual
-
-        # Processa só se for novo ou alterado
+        hash_atual = calcular_hash_arquivo(caminho)
+ 
         if pdf not in controle or controle[pdf] != hash_atual:
-            paginas = extrair_texto_pdf(caminho)       # Extrai texto
-            chunks  = criar_chunks(paginas)             # Divide em chunks
-
+            paginas = extrair_texto_pdf(caminho)
+            chunks  = criar_chunks(paginas)
+ 
             for chunk in chunks:
-                emb = gerar_embedding(chunk["texto"])  # Vetoriza via OpenAI
+                emb = gerar_embedding(chunk["texto"])
                 novos_chunks.append({
                     "id":     chunk["metadata"]["chunk_id"],
                     "values": emb,
@@ -256,225 +329,218 @@ def processar_uploads(uploads):
                         "pagina":  chunk["metadata"]["pagina"]
                     }
                 })
-            controle[pdf] = hash_atual    # Atualiza hash
+            controle[pdf] = hash_atual
             pdfs_novos.append(pdf)
-
+ 
     if novos_chunks:
-        inserir_chunks(indice, novos_chunks)   # Envia ao Pinecone
-        salvar_controle(controle)               # Persiste hashes
-        return len(pdfs_novos), f"✅ {len(pdfs_novos)} PDF(s) indexado(s)!"
+        inserir_chunks(indice, novos_chunks)
+        salvar_controle(controle)
+        return len(pdfs_novos), f"✅ {len(pdfs_novos)} PDF(s) indexado(s) com sucesso!"
     else:
-        return 0, "⏭️ Nenhum arquivo novo ou alterado."
-
-
+        return 0, "⏭️ Nenhum arquivo novo ou alterado detectado."
+ 
+ 
 # ════════════════════════════════════════════════════════════════════
 # ESTADO DA SESSÃO
 # ════════════════════════════════════════════════════════════════════
 if "mensagens" not in st.session_state:
-    st.session_state.mensagens = []   # Histórico do chat
-
-
+    st.session_state.mensagens = []
+ 
+ 
 # ════════════════════════════════════════════════════════════════════
-# SIDEBAR — expanders nativos, sempre funcionam
+# SIDEBAR — 100% componentes nativos dentro de expanders
 # ════════════════════════════════════════════════════════════════════
 with st.sidebar:
-
-    # Logo
-    st.markdown("""
-    <div style="padding: 0 0 10px 0;">
-      <span style="font-family:'Rajdhani',sans-serif; font-size:1.2rem;
-                   font-weight:700; color:#58a6ff; letter-spacing:0.08em;">
-        🧠 INTELLIDOC RAG
-      </span>
-    </div>
-    """, unsafe_allow_html=True)
+ 
+    # ── Logo ─────────────────────────────────────────────────────
+    st.markdown(
+        '<span style="font-family:Rajdhani,sans-serif;font-size:1.15rem;'
+        'font-weight:700;color:#d4dae3;letter-spacing:0.06em;">'
+        '🧠 INTELLIDOC </span>'
+        '<span style="font-family:Rajdhani,sans-serif;font-size:1.15rem;'
+        'font-weight:400;color:#3b82f6;">RAG</span>',
+        unsafe_allow_html=True
+    )
     st.divider()
-
-    # ── SEÇÃO 1: Upload ─────────────────────────────────────────
-    # expanded=True → começa aberta, usuário vê o upload imediatamente
-    with st.expander("📤 ENVIAR DOCUMENTOS", expanded=True):
-
+ 
+    # ── UPLOAD ───────────────────────────────────────────────────
+    with st.expander("📤  ENVIAR DOCUMENTOS", expanded=True):
+ 
         uploads = st.file_uploader(
-            "PDFs",                       # Label interno (não exibido)
+            "PDFs",
             type=["pdf"],
-            accept_multiple_files=True,   # Múltiplos arquivos de uma vez
-            label_visibility="collapsed", # Esconde o label padrão
+            accept_multiple_files=True,
+            label_visibility="collapsed",
             key="uploader"
         )
-
+ 
         if uploads:
-            st.caption(f"{len(uploads)} arquivo(s) pronto(s)")
+            st.caption(f"📎 {len(uploads)} arquivo(s) selecionado(s)")
             if st.button("⚡ INDEXAR AGORA", key="btn_idx"):
-                with st.spinner("Indexando..."):
+                with st.spinner("Processando e indexando…"):
                     qtd, msg = processar_uploads(uploads)
                 if qtd > 0:
                     st.success(msg)
                 else:
                     st.info(msg)
                 st.rerun()
-
-    # ── SEÇÃO 2: Documentos carregados ──────────────────────────
-    # expanded=True → lista sempre visível, sem precisar clicar
-    with st.expander("📚 DOCUMENTOS CARREGADOS", expanded=True):
-
+        else:
+            st.caption("Arraste PDFs aqui ou clique para selecionar")
+ 
+    # ── DOCUMENTOS ───────────────────────────────────────────────
+    with st.expander("📚  DOCUMENTOS CARREGADOS", expanded=True):
+ 
         pdfs = listar_pdfs()
-
+ 
         if not pdfs:
             st.caption("Nenhum documento ainda.")
             st.caption("Use o upload acima ↑")
         else:
             st.caption(f"{len(pdfs)} documento(s) indexado(s)")
             st.divider()
-
+ 
             for pdf in pdfs:
-                # Linha por arquivo: nome (truncado) + botão deletar
                 col_n, col_d = st.columns([5, 1])
-
                 with col_n:
-                    # Trunca nomes longos — max 18 caracteres visíveis
                     nome_curto = pdf[:16] + "…" if len(pdf) > 18 else pdf
-                    # st.text usa fonte monoespaçada — limpo, consistente
                     st.text(f"📄 {nome_curto}")
-
                 with col_d:
-                    # Key única por arquivo para o Streamlit não confundir os botões
                     if st.button("✕", key=f"d_{pdf}", help=f"Deletar: {pdf}"):
-                        deletar_pdf(pdf)        # Apaga arquivo + remove hash
-                        st.toast(f"🗑️ Deletado!")
-                        st.rerun()              # Atualiza a lista
-
-    # ── SEÇÃO 3: Sistema e RAGAS ─────────────────────────────────
-    # expanded=False → começa fechada para não poluir visualmente
-    with st.expander("⚙️ SISTEMA & AVALIAÇÃO RAGAS", expanded=False):
-
-        # Métricas gerais do sistema
+                        deletar_pdf(pdf)
+                        st.toast(f"🗑️ {pdf} removido!")
+                        st.rerun()
+ 
+    # ── SISTEMA ──────────────────────────────────────────────────
+    with st.expander("⚙️  SISTEMA", expanded=False):
+ 
         col1, col2 = st.columns(2)
         with col1:
-            st.metric("PDFs",   len(listar_pdfs()))   # Qtd de PDFs em data/raw/
+            st.metric("PDFs", len(listar_pdfs()))
         with col2:
-            st.metric("Chunks", contar_chunks())       # Total de chunks no JSON
-
+            st.metric("Chunks", contar_chunks())
+ 
         st.divider()
-        st.caption("AVALIAÇÃO DE QUALIDADE RAGAS")
-
-        rel = carregar_relatorio()   # Tenta carregar o JSON do relatório
-
+        st.caption("Pinecone · GPT-4o-mini")
+        st.caption("text-embedding-3-small (1536d)")
+ 
+    # ── RAGAS ────────────────────────────────────────────────────
+    with st.expander("📊  AVALIAÇÃO RAGAS", expanded=False):
+ 
+        rel = carregar_relatorio()
+ 
         if rel is None:
-            # Instrução quando relatório não existe
             st.caption("Relatório não gerado ainda.")
-            st.caption("Execute: `python src/evaluation.py`")
+            st.code("python src/evaluation.py", language="bash")
         else:
-            # As 4 métricas com seus thresholds mínimos aceitáveis
+            # Definição das métricas e seus thresholds
             metricas = [
                 ("Faithfulness",      "Fidelidade",     0.80),
                 ("Answer Relevancy",  "Relevância",     0.75),
                 ("Context Precision", "Precisão Ctx",   0.70),
                 ("Context Recall",    "Recall Ctx",     0.70),
             ]
-
+ 
             for chave, label, threshold in metricas:
                 score = float(rel.get(chave, 0))
-
-                # Emoji muda conforme o resultado vs threshold
-                emoji = "🟢" if score >= threshold else (
-                        "🟡" if score >= threshold - 0.10 else "🔴")
-
-                # Nome à esquerda, score à direita na mesma linha
+ 
+                # Emoji visual baseado no threshold
+                if score >= threshold:
+                    emoji = "🟢"
+                elif score >= threshold - 0.10:
+                    emoji = "🟡"
+                else:
+                    emoji = "🔴"
+ 
+                # Layout: nome + score lado a lado
                 c1, c2 = st.columns([3, 1])
                 with c1:
                     st.caption(f"{emoji} {label}")
                 with c2:
                     st.caption(f"**{score:.2f}**")
-
-                # Barra de progresso proporcional ao score (0.0 a 1.0)
+ 
+                # Barra de progresso proporcional (0.0 a 1.0)
                 st.progress(min(score, 1.0))
-
+ 
             st.divider()
-
-            # Score médio geral com indicador delta
+ 
+            # Score médio geral
             media = float(rel.get("media_geral", 0))
             delta = "✅ Aprovado" if media >= 0.75 else "⚠️ Abaixo do mínimo"
             st.metric("Score Médio Geral", f"{media:.2f}", delta=delta)
-
-
+ 
+ 
 # ════════════════════════════════════════════════════════════════════
 # ÁREA PRINCIPAL — CABEÇALHO
 # ════════════════════════════════════════════════════════════════════
 col_h, col_b = st.columns([6, 1])
-
+ 
 with col_h:
-    st.markdown("""
-    <div style="padding: 6px 0 2px 0;">
-      <span style="font-family:'Rajdhani',sans-serif; font-size:1.9rem;
-                   font-weight:700; color:#e6edf3; letter-spacing:0.02em;">
-        🧠 IntelliDoc RAG
-      </span><br>
-      <span style="font-size:0.72rem; color:#484f58;">
-        Converse com seus documentos técnicos usando IA
-      </span>
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.markdown(
+        '<div style="padding:4px 0 0 0;">'
+        '<span class="hdr-title">🧠 Intelli<span class="hdr-accent">Doc</span></span>'
+        '<div class="hdr-sub">Sistema RAG Multimodal · Converse com seus documentos técnicos</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+ 
 with col_b:
-    st.write("")   # Alinhamento vertical
-    # Apaga todo o histórico e mostra a tela de boas-vindas
-    if st.button("🗑️ Limpar", key="limpar",
-                 help="Apaga o histórico da conversa"):
+    st.write("")
+    if st.button("🗑️ Limpar", key="limpar", help="Apaga o histórico da conversa"):
         st.session_state.mensagens = []
         st.rerun()
-
+ 
 st.divider()
-
-
+ 
+ 
 # ════════════════════════════════════════════════════════════════════
-# HISTÓRICO DE MENSAGENS — st.chat_message nativo (sempre funciona)
+# HISTÓRICO DE MENSAGENS
 # ════════════════════════════════════════════════════════════════════
 if not st.session_state.mensagens:
-    # Tela de boas-vindas centralizada usando colunas nativas
-    _, col_c, _ = st.columns([1, 2, 1])
-    with col_c:
-        st.info(
-            "**👋 Bem-vindo ao IntelliDoc!**\n\n"
-            "Envie PDFs na sidebar e faça perguntas sobre o conteúdo deles.\n\n"
-            "**Exemplos:**\n"
-            "- O que é RAG e como funciona?\n"
-            "- Boas práticas de segurança em APIs REST?\n"
-            "- Como o Git ajuda no desenvolvimento?\n"
-            "- O que são embeddings?\n"
-            "- Quais são as métricas do RAGAS?"
-        )
+    # Tela de boas-vindas — HTML na área principal (renderiza sem bugs)
+    st.markdown("""
+    <div class="welcome-box">
+      <h2>👋 Bem-vindo ao IntelliDoc</h2>
+      <div class="sub">
+        Envie seus PDFs técnicos na sidebar e faça perguntas
+        sobre o conteúdo deles usando linguagem natural.
+      </div>
+      <div class="chip">💡 O que é RAG e como funciona?</div>
+      <div class="chip">🔒 Boas práticas de segurança em APIs REST?</div>
+      <div class="chip">🔀 Como o Git ajuda no desenvolvimento?</div>
+      <div class="chip">🧮 O que são embeddings e para que servem?</div>
+      <div class="chip">📊 Quais métricas o RAGAS utiliza?</div>
+    </div>
+    """, unsafe_allow_html=True)
 else:
-    # Renderiza cada mensagem com o componente nativo de chat
     for msg in st.session_state.mensagens:
         with st.chat_message(msg["role"]):
-            # st.markdown suporta formatação dentro de chat_message
             st.markdown(msg["content"])
-
-            # Fontes consultadas — só para respostas do assistente
+ 
+            # Fontes consultadas — apenas para respostas do assistente
             if msg["role"] == "assistant" and msg.get("fontes"):
                 fontes = "  ·  ".join([f"📄 `{f}`" for f in msg["fontes"]])
                 st.caption(f"🔍 Fontes: {fontes}")
-
-
+ 
+ 
 # ════════════════════════════════════════════════════════════════════
-# INPUT DO CHAT — fixo no rodapé
+# INPUT DO CHAT
 # ════════════════════════════════════════════════════════════════════
 pergunta = st.chat_input("💬  Pergunte algo sobre seus documentos...")
-
+ 
 if pergunta:
     # 1. Registra pergunta no histórico
     st.session_state.mensagens.append({"role": "user", "content": pergunta})
-
+ 
     # 2. Gera resposta via pipeline RAG (Pinecone + GPT-4o-mini)
-    with st.spinner("🔍 Buscando e gerando resposta..."):
+    with st.spinner("🔍 Buscando contexto e gerando resposta…"):
         resultado = rag_query(pergunta)
-
+ 
     # 3. Registra resposta + fontes no histórico
     st.session_state.mensagens.append({
         "role":    "assistant",
         "content": resultado["resposta"],
         "fontes":  resultado["fontes"]
     })
-
-    # 4. Recarrega para exibir as novas mensagens
+ 
+    # 4. Recarrega para exibir novas mensagens
     st.rerun()
