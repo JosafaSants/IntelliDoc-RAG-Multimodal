@@ -51,9 +51,9 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🌐 **Interface Streamlit** | Upload, chat, gestão de docs e scores RAGAS | ✅ v1.0 |
 | 🖼️ **OCR de Imagens** | Extração de texto de imagens via Tesseract 5.5 | ✅ v1.1 |
 | 🔗 **OCR no Pipeline** | Imagens indexadas junto com PDFs automaticamente | ✅ v1.1 |
-| 🖼️ **Upload de Imagens** | Aceitar imagens na interface Streamlit | 🔄 v1.1 em progresso |
-| 💬 **Memória Persistente** | Histórico entre sessões | 🔜 v1.1 |
-| 🚀 **Deploy em Nuvem** | Streamlit Cloud ou Hugging Face Spaces | 🔜 v1.1 |
+| 🖼️ **Upload de Imagens** | Interface aceita PNG, JPG, JPEG, BMP, TIFF, WEBP | ✅ v1.1 |
+| 💬 **Memória Persistente** | Histórico entre sessões | 🔜 v1.2 |
+| 🚀 **Deploy em Nuvem** | Streamlit Cloud ou Hugging Face Spaces | 🔜 v1.2 |
 
 ---
 
@@ -99,9 +99,23 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 
 ---
 
-## 🖼️ Pipeline OCR de Imagens
+## 🖥️ Interface Streamlit
 
-O módulo `src/ocr.py` extrai texto de imagens usando **Tesseract 5.5** com pré-processamento automático:
+**Sidebar:**
+- `📤 ENVIAR DOCUMENTOS` — upload de PDFs e imagens com indexação automática
+- `📚 DOCUMENTOS CARREGADOS` — lista com botão ✕ para deletar cada arquivo
+- `⚙️ SISTEMA & RAGAS` — estatísticas (PDFs, chunks) e scores de qualidade
+
+**Área principal:**
+- Chat interativo com histórico da sessão
+- Respostas formatadas com citação das fontes
+- Botão para limpar o histórico
+
+**Formatos aceitos no upload:** `.pdf` `.png` `.jpg` `.jpeg` `.bmp` `.tiff` `.webp`
+
+---
+
+## 🖼️ Pipeline OCR de Imagens
 
 ```
 Imagem original
@@ -121,13 +135,9 @@ Limpeza do texto     → Remove linhas vazias e espaços extras
 Chunks + Pinecone    → Mesmo pipeline dos PDFs ✅
 ```
 
-**Formatos suportados:** `.png` `.jpg` `.jpeg` `.bmp` `.tiff` `.webp`
-
 ---
 
 ## ⚡ Ingestão Incremental
-
-O sistema usa **hash MD5** para detectar mudanças — PDFs e imagens são verificados juntos:
 
 ```
 1ª execução:                  2ª execução (sem mudanças):
@@ -190,7 +200,7 @@ intellidoc-rag/
     ├── rag_pipeline.py    # ✅ Pipeline RAG end-to-end
     ├── evaluation.py      # ✅ Avaliação RAGAS
     ├── ocr.py             # ✅ OCR de imagens com Tesseract
-    └── app.py             # ✅ Interface Streamlit
+    └── app.py             # ✅ Interface Streamlit com upload de imagens
 ```
 
 ---
@@ -237,7 +247,7 @@ copy .env.example .env
 python fix_ssl.py
 ```
 
-### 6. Indexe os documentos e imagens
+### 6. Indexe os documentos
 
 ```bash
 # Coloque PDFs e imagens em data/raw/ e execute:
@@ -261,33 +271,34 @@ streamlit run src/app.py
 - [x] **Fase 5** — Avaliação RAGAS — score médio 0.81 ✅
 - [x] **Fase 6** — Interface Streamlit — v1.0 publicada ✅
 - [x] **Fase 7** — OCR de imagens integrado ao pipeline ✅
-- [ ] **Fase 7b** — Upload de imagens na interface Streamlit 🔄
-- [ ] **Fase 8** — Deploy em nuvem 🔜
+- [x] **Fase 7b** — Upload de imagens na interface Streamlit ✅
+- [ ] **Fase 8** — Deploy em nuvem 🔜 v1.2
 
 ---
 
 ## 📝 Diário de Desenvolvimento
 
+### ✅ Fase 7b — Upload de imagens na interface
+- `app.py` atualizado para aceitar imagens no upload (PNG, JPG, JPEG, BMP, TIFF, WEBP)
+- `processar_uploads()` atualizado para detectar tipo do arquivo e aplicar OCR quando necessário
+- Sidebar reorganizada sem expanders problemáticos — seções limpas e funcionais
+- Scores RAGAS visíveis diretamente na sidebar com barras de progresso
+
 ### ✅ Fase 7 — OCR integrado ao pipeline
 - Tesseract 5.5 instalado e configurado no Windows
 - `src/ocr.py` criado com pré-processamento automático de imagens
-- Integração com `ingest.py` — função `processar_todos_arquivos()` unifica PDFs e imagens
-- `vector_store.py` atualizado para detectar e indexar imagens novas/alteradas
-- Testado com `teste_ocr.png` → 2 chunks extraídos e enviados ao Pinecone
-- Ingestão incremental funcionando para imagens — mesmo comportamento dos PDFs
+- `ingest.py` e `vector_store.py` atualizados para PDFs e imagens juntos
+- Ingestão incremental funcionando para imagens
 
 ### ✅ Fase 6 — v1.0 publicada
 - Interface Streamlit dark mode com sidebar funcional
-- Gestão de documentos: upload, listagem e deleção
-- Chat interativo com histórico e citação de fontes
 - Release v1.0.0 publicada no GitHub
 
 ### ✅ Fases 1–5 — Pipeline completo
 - Ambiente, embeddings, Pinecone, RAG e avaliação RAGAS implementados
-- Ingestão incremental otimizada com hash MD5
 
 ### 🔧 Melhorias identificadas pelo desenvolvedor
-- **Ingestão incremental v2** — embeddings gerados apenas para chunks alterados, eliminando desperdício de créditos de API
+- **Ingestão incremental v2** — embeddings gerados apenas para chunks alterados
 
 ---
 
