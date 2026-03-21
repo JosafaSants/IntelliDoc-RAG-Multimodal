@@ -36,6 +36,16 @@ st.set_page_config(
 # ════════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
+/* Remove ícones indesejados do Material Icons nos expanders e sidebar */
+[data-testid="stSidebar"] span[data-testid="stIconMaterial"],
+[data-testid="stExpander"] span[data-testid="stIconMaterial"] {
+    display: none !important;
+}
+
+/* Remove o keyboard_double do topo da sidebar */
+[data-testid="stSidebarCollapseButton"] span {
+    display: none !important;
+}
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
  
 :root {
@@ -297,27 +307,46 @@ def carregar_relatorio():
  
 def processar_uploads(uploads):
     """
-    Salva PDFs em data/raw/ e indexa apenas novos/alterados (hash MD5).
+    Salva arquivos em data/raw/ e indexa apenas novos/alterados.
+    Agora aceita PDFs e imagens (png, jpg, jpeg, bmp, tiff, webp).
     Retorna (quantidade_indexada, mensagem).
     """
     for arq in uploads:
         destino = os.path.join("data", "raw", arq.name)
         with open(destino, "wb") as f:
             f.write(arq.getbuffer())
- 
-    controle     = carregar_controle()
-    indice       = conectar_pinecone()
-    novos_chunks = []
-    pdfs_novos   = []
- 
-    for pdf in listar_pdfs():
-        caminho    = os.path.join("data", "raw", pdf)
+
+    controle          = carregar_controle()
+    indice            = conectar_pinecone()
+    novos_chunks      = []
+    arquivos_novos    = []
+    extensoes_img     = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
+
+    # Verifica PDFs e imagens juntos
+    todos_arquivos = [
+        f for f in os.listdir("data/raw")
+        if f.endswith(".pdf") or
+        os.path.splitext(f)[1].lower() in extensoes_img
+    ]
+
+    for arquivo in todos_arquivos:
+        caminho    = os.path.join("data", "raw", arquivo)
         hash_atual = calcular_hash_arquivo(caminho)
- 
-        if pdf not in controle or controle[pdf] != hash_atual:
-            paginas = extrair_texto_pdf(caminho)
-            chunks  = criar_chunks(paginas)
- 
+
+        if arquivo not in controle or controle[arquivo] != hash_atual:
+            ext = os.path.splitext(arquivo)[1].lower()
+
+            if ext == ".pdf":
+                # Processa PDF normalmente
+                paginas = extrair_texto_pdf(caminho)
+            else:
+                # Processa imagem via OCR
+                from ocr import extrair_texto_imagem
+                texto   = extrair_texto_imagem(caminho)
+                paginas = [{"texto": texto, "pagina": 1, "arquivo": arquivo}]
+
+            chunks = criar_chunks(paginas)
+
             for chunk in chunks:
                 emb = gerar_embedding(chunk["texto"])
                 novos_chunks.append({
@@ -329,16 +358,15 @@ def processar_uploads(uploads):
                         "pagina":  chunk["metadata"]["pagina"]
                     }
                 })
-            controle[pdf] = hash_atual
-            pdfs_novos.append(pdf)
- 
+            controle[arquivo] = hash_atual
+            arquivos_novos.append(arquivo)
+
     if novos_chunks:
         inserir_chunks(indice, novos_chunks)
         salvar_controle(controle)
-        return len(pdfs_novos), f"✅ {len(pdfs_novos)} PDF(s) indexado(s) com sucesso!"
+        return len(arquivos_novos), f"✅ {len(arquivos_novos)} arquivo(s) indexado(s)!"
     else:
-        return 0, "⏭️ Nenhum arquivo novo ou alterado detectado."
- 
+        return 0, "⏭️ Nenhum arquivo novo ou alterado." 
  
 # ════════════════════════════════════════════════════════════════════
 # ESTADO DA SESSÃO
@@ -363,110 +391,88 @@ with st.sidebar:
     )
     st.divider()
  
-    # ── UPLOAD ───────────────────────────────────────────────────
-    with st.expander("📤  ENVIAR DOCUMENTOS", expanded=True):
- 
-        uploads = st.file_uploader(
-            "PDFs",
-            type=["pdf"],
-            accept_multiple_files=True,
-            label_visibility="collapsed",
-            key="uploader"
-        )
- 
-        if uploads:
-            st.caption(f"📎 {len(uploads)} arquivo(s) selecionado(s)")
-            if st.button("⚡ INDEXAR AGORA", key="btn_idx"):
-                with st.spinner("Processando e indexando…"):
-                    qtd, msg = processar_uploads(uploads)
-                if qtd > 0:
-                    st.success(msg)
-                else:
-                    st.info(msg)
-                st.rerun()
-        else:
-            st.caption("Arraste PDFs aqui ou clique para selecionar")
- 
-    # ── DOCUMENTOS ───────────────────────────────────────────────
-    with st.expander("📚  DOCUMENTOS CARREGADOS", expanded=True):
- 
-        pdfs = listar_pdfs()
- 
-        if not pdfs:
-            st.caption("Nenhum documento ainda.")
-            st.caption("Use o upload acima ↑")
-        else:
-            st.caption(f"{len(pdfs)} documento(s) indexado(s)")
-            st.divider()
- 
-            for pdf in pdfs:
-                col_n, col_d = st.columns([5, 1])
-                with col_n:
-                    nome_curto = pdf[:16] + "…" if len(pdf) > 18 else pdf
-                    st.text(f"📄 {nome_curto}")
-                with col_d:
-                    if st.button("✕", key=f"d_{pdf}", help=f"Deletar: {pdf}"):
-                        deletar_pdf(pdf)
-                        st.toast(f"🗑️ {pdf} removido!")
-                        st.rerun()
- 
-    # ── SISTEMA ──────────────────────────────────────────────────
-    with st.expander("⚙️  SISTEMA", expanded=False):
- 
+    # ── SEÇÃO 1: Upload ─────────────────────────────────────────
+    st.markdown("**📤 ENVIAR DOCUMENTOS**")
+    st.divider()
+
+    uploads = st.file_uploader(
+        "PDFs e Imagens",
+        type=["pdf", "png", "jpg", "jpeg", "bmp", "tiff", "webp"],
+        accept_multiple_files=True,
+        label_visibility="collapsed",
+        key="uploader"
+    )
+
+    if uploads:
+        st.caption(f"{len(uploads)} arquivo(s) pronto(s)")
+        if st.button("⚡ INDEXAR AGORA", key="btn_idx"):
+            with st.spinner("Indexando..."):
+                qtd, msg = processar_uploads(uploads)
+            if qtd > 0:
+                st.success(msg)
+            else:
+                st.info(msg)
+            st.rerun()
+
+    st.divider()
+
+    # ── SEÇÃO 2: Documentos carregados ──────────────────────────
+    st.markdown("**📚 DOCUMENTOS CARREGADOS**")
+
+    pdfs = listar_pdfs()
+
+    if not pdfs:
+        st.caption("Nenhum documento ainda.")
+        st.caption("Use o upload acima ↑")
+    else:
+        st.caption(f"{len(pdfs)} documento(s) indexado(s)")
+        st.divider()
+        for pdf in pdfs:
+            col_n, col_d = st.columns([5, 1])
+            with col_n:
+                nome_curto = pdf[:16] + "…" if len(pdf) > 18 else pdf
+                st.text(f"📄 {nome_curto}")
+            with col_d:
+                if st.button("✕", key=f"d_{pdf}", help=f"Deletar: {pdf}"):
+                    deletar_pdf(pdf)
+                    st.toast(f"🗑️ Deletado!")
+                    st.rerun()
+
+    st.divider()
+
+    # ── SEÇÃO 3: Sistema e RAGAS ─────────────────────────────────
+    with st.expander("⚙️ SISTEMA & RAGAS", expanded=False):
         col1, col2 = st.columns(2)
         with col1:
             st.metric("PDFs", len(listar_pdfs()))
         with col2:
             st.metric("Chunks", contar_chunks())
- 
+
         st.divider()
-        st.caption("Pinecone · GPT-4o-mini")
-        st.caption("text-embedding-3-small (1536d)")
- 
-    # ── RAGAS ────────────────────────────────────────────────────
-    with st.expander("📊  AVALIAÇÃO RAGAS", expanded=False):
- 
         rel = carregar_relatorio()
- 
+
         if rel is None:
-            st.caption("Relatório não gerado ainda.")
-            st.code("python src/evaluation.py", language="bash")
+            st.caption("Execute: `python src/evaluation.py`")
         else:
-            # Definição das métricas e seus thresholds
             metricas = [
-                ("Faithfulness",      "Fidelidade",     0.80),
-                ("Answer Relevancy",  "Relevância",     0.75),
-                ("Context Precision", "Precisão Ctx",   0.70),
-                ("Context Recall",    "Recall Ctx",     0.70),
+                ("Faithfulness",      "Fidelidade",    0.80),
+                ("Answer Relevancy",  "Relevância",    0.75),
+                ("Context Precision", "Precisão Ctx",  0.70),
+                ("Context Recall",    "Recall Ctx",    0.70),
             ]
- 
             for chave, label, threshold in metricas:
                 score = float(rel.get(chave, 0))
- 
-                # Emoji visual baseado no threshold
-                if score >= threshold:
-                    emoji = "🟢"
-                elif score >= threshold - 0.10:
-                    emoji = "🟡"
-                else:
-                    emoji = "🔴"
- 
-                # Layout: nome + score lado a lado
+                emoji = "🟢" if score >= threshold else "🟡" if score >= threshold - 0.10 else "🔴"
                 c1, c2 = st.columns([3, 1])
                 with c1:
                     st.caption(f"{emoji} {label}")
                 with c2:
                     st.caption(f"**{score:.2f}**")
- 
-                # Barra de progresso proporcional (0.0 a 1.0)
                 st.progress(min(score, 1.0))
- 
             st.divider()
- 
-            # Score médio geral
             media = float(rel.get("media_geral", 0))
             delta = "✅ Aprovado" if media >= 0.75 else "⚠️ Abaixo do mínimo"
-            st.metric("Score Médio Geral", f"{media:.2f}", delta=delta)
+            st.metric("Score Médio", f"{media:.2f}", delta=delta)
  
  
 # ════════════════════════════════════════════════════════════════════
