@@ -50,36 +50,51 @@ def criar_chunks(paginas, chunk_size=500, chunk_overlap=50): # Define a função
     return chunks
 
 
-def processar_todos_pdfs(pasta_raw="data/raw", pasta_processed="data/processed"):
-    """Processa todos os PDFs de uma pasta e salva os chunks."""
-    pdfs = [f for f in os.listdir(pasta_raw) if f.endswith(".pdf")]
+def processar_todos_arquivos(pasta_raw="data/raw"):
+    """
+    Processa todos os arquivos de data/raw/ — PDFs e imagens.
+    Retorna uma lista unificada de chunks com metadados,
+    independente do tipo de arquivo de origem.
+    """
+    from ocr import processar_imagens_pasta   # Importa o módulo de OCR
 
-    if not pdfs:
-        print("❌ Nenhum PDF encontrado em data/raw/")
-        return []
-
-    print(f"📂 {len(pdfs)} PDF(s) encontrado(s):\n")
+    print(f"📂 Verificando arquivos em {pasta_raw}...\n")
 
     todos_chunks = []
 
-    for pdf in pdfs:
-        caminho = os.path.join(pasta_raw, pdf)
-        paginas = extrair_texto_pdf(caminho)
-        chunks = criar_chunks(paginas)
-        todos_chunks.extend(chunks)
-        print(f"  ✅ {pdf}")
-        print(f"     Páginas: {len(paginas)} | Chunks: {len(chunks)}")
+    # ── Processa PDFs ─────────────────────────────────────────────
+    pdfs = [f for f in os.listdir(pasta_raw) if f.endswith(".pdf")]
 
-    # Salva tudo em um único JSON
-    caminho_saida = os.path.join(pasta_processed, "chunks.json")
-    with open(caminho_saida, "w", encoding="utf-8") as f:
-        json.dump(todos_chunks, f, ensure_ascii=False, indent=2)
+    if pdfs:
+        print(f"📄 {len(pdfs)} PDF(s) encontrado(s)")
+        for pdf in pdfs:
+            caminho = os.path.join(pasta_raw, pdf)
+            paginas = extrair_texto_pdf(caminho)
+            chunks  = criar_chunks(paginas)
+            todos_chunks.extend(chunks)
+            print(f"   ✅ {pdf} → {len(chunks)} chunks")
+    else:
+        print("📄 Nenhum PDF encontrado")
 
-    print(f"\n📊 Resumo Final:")
-    print(f"   PDFs processados : {len(pdfs)}")
-    print(f"   Total de chunks  : {len(todos_chunks)}")
-    print(f"   Arquivo gerado   : {caminho_saida}")
+    print()
 
+    # ── Processa Imagens via OCR ───────────────────────────────────
+    extensoes_img = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
+    imagens = [
+        f for f in os.listdir(pasta_raw)
+        if os.path.splitext(f)[1].lower() in extensoes_img
+    ]
+
+    if imagens:
+        print(f"🖼️  {len(imagens)} imagem(ns) encontrada(s)")
+        paginas_ocr = processar_imagens_pasta(pasta_raw)
+        chunks_ocr  = criar_chunks(paginas_ocr)
+        todos_chunks.extend(chunks_ocr)
+        print(f"   ✅ {len(imagens)} imagem(ns) → {len(chunks_ocr)} chunks")
+    else:
+        print("🖼️  Nenhuma imagem encontrada")
+
+    print(f"\n📊 Total de chunks gerados: {len(todos_chunks)}")
     return todos_chunks
 
 
