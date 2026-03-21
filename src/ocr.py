@@ -113,7 +113,9 @@ def processar_imagens_pasta(pasta_raw=os.path.join("data", "raw")):
 if __name__ == "__main__":
     # Este bloco só executa quando rodamos python src/ocr.py diretamente
     # Quando o módulo é importado por outro arquivo, este bloco é ignorado
-    paginas = processar_imagens_pasta()
+    paginas = processar_imagens_pasta(
+        os.path.join("data", "raw")
+    )
 
     if paginas:
         print(f"\n✅ {len(paginas)} imagem(ns) processada(s)")
