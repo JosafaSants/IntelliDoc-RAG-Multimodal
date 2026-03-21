@@ -36,7 +36,7 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 
 ---
 
-## ⚠️ Status das Funcionalidades
+## ✨ Status das Funcionalidades
 
 | Funcionalidade | Descrição | Versão |
 |---|---|---|
@@ -44,14 +44,14 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🔪 **Chunking Inteligente** | Divisão com overlap via LangChain TextSplitter | ✅ v1.0 |
 | 🔢 **Embeddings Semânticos** | Vetorização com `text-embedding-3-small` | ✅ v1.0 |
 | ⚡ **Ingestão Incremental** | Hash MD5 — processa apenas arquivos novos/alterados | ✅ v1.0 |
-| 🗄️ **Banco Vetorial** | 63+ vetores no Pinecone, busca semântica | ✅ v1.0 |
+| 🗄️ **Banco Vetorial** | 65+ vetores no Pinecone, busca semântica | ✅ v1.0 |
 | 🔗 **Pipeline RAG** | Busca semântica + GPT-4o-mini integrados | ✅ v1.0 |
 | 🛡️ **Respostas Honestas** | Diz quando não encontra a informação | ✅ v1.0 |
 | 📊 **Avaliação RAGAS** | 4 métricas automáticas de qualidade | ✅ v1.0 |
 | 🌐 **Interface Streamlit** | Upload, chat, gestão de docs e scores RAGAS | ✅ v1.0 |
-| 🖼️ **OCR — Pré-processamento** | Conversão, contraste e nitidez via Pillow | 🔄 v1.1 em progresso |
-| 🖼️ **OCR — Extração de Texto** | Leitura de imagens via Tesseract 5.5 | 🔄 v1.1 em progresso |
-| 🖼️ **OCR — Integração Pipeline** | Imagens indexadas junto com PDFs | 🔜 v1.1 |
+| 🖼️ **OCR de Imagens** | Extração de texto de imagens via Tesseract 5.5 | ✅ v1.1 |
+| 🔗 **OCR no Pipeline** | Imagens indexadas junto com PDFs automaticamente | ✅ v1.1 |
+| 🖼️ **Upload de Imagens** | Aceitar imagens na interface Streamlit | 🔄 v1.1 em progresso |
 | 💬 **Memória Persistente** | Histórico entre sessões | 🔜 v1.1 |
 | 🚀 **Deploy em Nuvem** | Streamlit Cloud ou Hugging Face Spaces | 🔜 v1.1 |
 
@@ -68,8 +68,8 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
   ┌──────────┐          ┌──────────────┐          ┌──────────────┐
   │   PDF    │─PyMuPDF─▶│  Hash MD5    │          │              │
   └──────────┘          │  Chunking    │─Embed───▶│   Pinecone   │
-  ┌──────────┐          │  +Metadata   │  (novos) │  Vector DB   │
-  │  Imagem  │─Tesseract▶  OCR [v1.1] │          │              │
+  ┌──────────┐          │  +Metadata   │  (novos) │  65+ vetores │
+  │  Imagem  │─Tesseract▶  OCR ✅     │          │              │
   └──────────┘          └──────────────┘          └──────┬───────┘
                                                          │
   💬 QUERY ✅            🤖 GENERATION ✅          🔍 RETRIEVAL ✅
@@ -99,34 +99,18 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 
 ---
 
-## ⚡ Ingestão Incremental
+## 🖼️ Pipeline OCR de Imagens
 
-O sistema usa **hash MD5** para detectar mudanças e gera embeddings **apenas para chunks novos ou alterados**:
-
-```
-1ª execução:                  2ª execução (sem mudanças):
-──────────────────────        ────────────────────────────────
-🆕 novo  — doc1.pdf           ⏭️  doc1.pdf — sem alterações
-🆕 novo  — doc2.pdf           ⏭️  doc2.pdf — sem alterações
-→ gera embeddings             → zero chamadas à API OpenAI
-→ insere no Pinecone          → Pinecone já está atualizado!
-→ salva hashes MD5
-```
-
----
-
-## 🖼️ OCR de Imagens — v1.1 em desenvolvimento
-
-O módulo `src/ocr.py` implementa extração de texto de imagens usando **Tesseract 5.5**. O pipeline de pré-processamento aplica:
+O módulo `src/ocr.py` extrai texto de imagens usando **Tesseract 5.5** com pré-processamento automático:
 
 ```
 Imagem original
       ↓
-Escala de cinza     → Tesseract funciona melhor sem cores
+Escala de cinza      → Tesseract funciona melhor sem cores
       ↓
-Aumento de contraste → Destaca texto do fundo (×2.0)
+Contraste ×2.0       → Destaca texto do fundo
       ↓
-Aumento de nitidez   → Bordas das letras mais definidas (×2.0)
+Nitidez ×2.0         → Bordas das letras mais definidas
       ↓
 Filtro SHARPEN       → Nitidez adicional
       ↓
@@ -134,7 +118,25 @@ Tesseract OCR        → lang="por+eng", psm=3 (automático)
       ↓
 Limpeza do texto     → Remove linhas vazias e espaços extras
       ↓
-Chunks + Pinecone    → Mesmo pipeline dos PDFs
+Chunks + Pinecone    → Mesmo pipeline dos PDFs ✅
+```
+
+**Formatos suportados:** `.png` `.jpg` `.jpeg` `.bmp` `.tiff` `.webp`
+
+---
+
+## ⚡ Ingestão Incremental
+
+O sistema usa **hash MD5** para detectar mudanças — PDFs e imagens são verificados juntos:
+
+```
+1ª execução:                  2ª execução (sem mudanças):
+──────────────────────        ────────────────────────────────
+🆕 novo  — doc1.pdf           ⏭️  doc1.pdf — sem alterações
+🆕 novo  — foto.png           ⏭️  foto.png — sem alterações
+→ gera embeddings             → zero chamadas à API OpenAI
+→ insere no Pinecone          → Pinecone já está atualizado!
+→ salva hashes MD5
 ```
 
 ---
@@ -152,8 +154,8 @@ Chunks + Pinecone    → Mesmo pipeline dos PDFs
 | Parser PDF | PyMuPDF (fitz) | 1.27+ |
 | Chunking | LangChain Text Splitters | 0.1+ |
 | Deduplicação | Hash MD5 | built-in |
-| OCR Engine | Tesseract | 5.5 🔄 v1.1 |
-| OCR Python | pytesseract + Pillow | 0.3+ 🔄 v1.1 |
+| OCR Engine | Tesseract | 5.5 ✅ |
+| OCR Python | pytesseract + Pillow | 0.3+ ✅ |
 | Avaliação | RAGAS | 0.4+ |
 | Env vars | python-dotenv | 1.0+ |
 
@@ -179,15 +181,15 @@ intellidoc-rag/
 │       └── relatorio_ragas.json
 │
 ├── 📂 docs/
-│   └── demo_interface.png     # Screenshot da interface
+│   └── demo_interface.png
 │
 └── 📂 src/
-    ├── ingest.py          # ✅ Ingestão multi-PDF com chunking
+    ├── ingest.py          # ✅ Ingestão PDFs + integração OCR
     ├── embeddings.py      # ✅ Embeddings via OpenAI
-    ├── vector_store.py    # ✅ Pinecone + ingestão incremental
+    ├── vector_store.py    # ✅ Pinecone + ingestão incremental PDFs e imagens
     ├── rag_pipeline.py    # ✅ Pipeline RAG end-to-end
     ├── evaluation.py      # ✅ Avaliação RAGAS
-    ├── ocr.py             # 🔄 OCR de imagens — v1.1 em progresso
+    ├── ocr.py             # ✅ OCR de imagens com Tesseract
     └── app.py             # ✅ Interface Streamlit
 ```
 
@@ -235,9 +237,10 @@ copy .env.example .env
 python fix_ssl.py
 ```
 
-### 6. Indexe os documentos
+### 6. Indexe os documentos e imagens
 
 ```bash
+# Coloque PDFs e imagens em data/raw/ e execute:
 python src/vector_store.py
 ```
 
@@ -256,27 +259,27 @@ streamlit run src/app.py
 - [x] **Fase 3** — Embeddings e banco vetorial Pinecone ✅
 - [x] **Fase 4** — Pipeline RAG end-to-end ✅
 - [x] **Fase 5** — Avaliação RAGAS — score médio 0.81 ✅
-- [x] **Fase 6** — Interface Streamlit completa — **v1.0 publicada!** ✅
-- [ ] **Fase 7** — OCR de imagens com Tesseract 🔄 em progresso
+- [x] **Fase 6** — Interface Streamlit — v1.0 publicada ✅
+- [x] **Fase 7** — OCR de imagens integrado ao pipeline ✅
+- [ ] **Fase 7b** — Upload de imagens na interface Streamlit 🔄
 - [ ] **Fase 8** — Deploy em nuvem 🔜
 
 ---
 
 ## 📝 Diário de Desenvolvimento
 
-### 🔄 Fase 7 — OCR de Imagens — em progresso
+### ✅ Fase 7 — OCR integrado ao pipeline
 - Tesseract 5.5 instalado e configurado no Windows
-- `src/ocr.py` criado com pipeline de pré-processamento de imagens
-- Pré-processamento: escala de cinza → contraste → nitidez → filtro SHARPEN
-- Extração via `pytesseract` com suporte a português e inglês (`por+eng`)
-- Modo `--psm 3` para segmentação automática de página
-- Próximo passo: integrar com `ingest.py` e `vector_store.py`
+- `src/ocr.py` criado com pré-processamento automático de imagens
+- Integração com `ingest.py` — função `processar_todos_arquivos()` unifica PDFs e imagens
+- `vector_store.py` atualizado para detectar e indexar imagens novas/alteradas
+- Testado com `teste_ocr.png` → 2 chunks extraídos e enviados ao Pinecone
+- Ingestão incremental funcionando para imagens — mesmo comportamento dos PDFs
 
 ### ✅ Fase 6 — v1.0 publicada
 - Interface Streamlit dark mode com sidebar funcional
 - Gestão de documentos: upload, listagem e deleção
 - Chat interativo com histórico e citação de fontes
-- Painel de scores RAGAS na interface
 - Release v1.0.0 publicada no GitHub
 
 ### ✅ Fases 1–5 — Pipeline completo
