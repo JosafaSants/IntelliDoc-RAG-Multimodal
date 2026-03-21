@@ -67,7 +67,7 @@ def extrair_texto_imagem(caminho_imagem):
     print(f"... Qtd de caracteres extraídos: {len(texto_limpo)}")
     return texto_limpo
 
-def processar_imagens_pasta(pasta_raw = "data\raw"):
+def processar_imagens_pasta(pasta_raw=os.path.join("data", "raw")):
     """
     Processa todas as imagens de uma determinada pasta e irá
     retornar uma lista de dicionários no mesmo formato dos chunks dos PDFs.
