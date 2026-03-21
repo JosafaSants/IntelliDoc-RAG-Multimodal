@@ -61,3 +61,64 @@ def extrair_texto_imagem(caminho_imagem):
     )
     # Vamos remover linhas em branco e espaços desnecessarios
     # O splitlines() vai dividir o texto em uma lista de linhas
+    # O filtro 'if linha.strip()' irá descartar linhas que só tem espaços
+    # E o join irar unir todas as linhas em uma mesma string
+
+    print(f"... Qtd de caracteres extraídos: {len(texto_limpo)}")
+    return texto_limpo
+
+def processar_imagens_pasta(pasta_raw = "data\raw"):
+    """
+    Processa todas as imagens de uma determinada pasta e irá
+    retornar uma lista de dicionários no mesmo formato dos chunks dos PDFs.
+    Para que possamos usar o mesmo pipeline e tratar os PDFs e Imagens da mesma forma
+    sem alterações significativas ao projeto.
+    """
+
+    # Definição dos formatos de imagens aceitaveis para o OCR
+    extensoes = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"} # Foi indicado que usar o '{}' substituindo o '[]' torna a leitura da extenção mais rapida.
+
+    # Comparativo dos formatos de imagem aceitavel
+    imagens = [
+        f for f in os.listdir(pasta_raw)
+        if os.path.splitext(f)[1].lower() in extensoes
+    ]
+
+    if not imagens:
+        print("📭 Nenhuma imagem encontrada em data/raw/")
+        return
+    
+    print(f"🖼️  {len(imagens)} imagem(ns) encontrada(s)\n")
+
+    paginas = [] # Iremos acumular este objeto lista com os texto no mesmo formato do chunk
+
+    for imagem in imagens:
+        caminho = os.path.join(pasta_raw, imagem)
+        texto = extrair_texto_imagem(caminho) # Referencia a função acima
+
+        if texto.strip():
+            # Monta o dicionario de forma similar a função extrai_texto_pdf() definida na função ingest.py
+            paginas.append({
+                "texto": texto,
+                "pagina": 1,
+                "arquivo": imagem
+            })
+            
+        else:
+            print(f"   ⚠️  Nenhum texto encontrado em {imagem}")
+
+    return paginas
+
+
+if __name__ == "__main__":
+    # Este bloco só executa quando rodamos python src/ocr.py diretamente
+    # Quando o módulo é importado por outro arquivo, este bloco é ignorado
+    paginas = processar_imagens_pasta()
+
+    if paginas:
+        print(f"\n✅ {len(paginas)} imagem(ns) processada(s)")
+        print(f"\n📋 Preview do primeiro resultado:")
+        print(f"   Arquivo : {paginas[0]['arquivo']}")
+        print(f"   Texto   : {paginas[0]['texto'][:200]}...")
+    else:
+        print("\n❌ Nenhum texto extraído.")
