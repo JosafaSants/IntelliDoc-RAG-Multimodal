@@ -4,17 +4,39 @@ import os
 import json
 import tempfile # Biblioteca para utilizar arquivos temporários
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv # Carrega variáveis do arquivo .env (usado localmente)
 
 # Adiciona o diretório src ao path para importar os módulos do projeto
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from ingest import extrair_texto_pdf, criar_chunks # Insere algumas funções definidas em ingest.py para processar os PDFs
-from vector_store import conectar_pinecone, inserir_chunks, buscar, filtrar_pdfs_alterados, calcular_hash_arquivo, carregar_controle, salvar_controle # Insere algumas funções definidas em vector_store.py para lidar com o armazenamento e consulta dos embeddings
-from embeddings import gerar_embedding # Insere a função definida em embeddings.py para gerar os embeddings dos chunks de texto
-from rag_pipeline import rag_query # Insere a função definida em rag_pipeline.py para processar as perguntas do usuário e gerar as respostas usando o modelo de linguagem
+from ingest import extrair_texto_pdf, criar_chunks # Funções de ingestão de PDFs
+from vector_store import conectar_pinecone, inserir_chunks, buscar, filtrar_pdfs_alterados, calcular_hash_arquivo, carregar_controle, salvar_controle # Funções do Pinecone
+from embeddings import gerar_embedding # Geração de embeddings
+from rag_pipeline import rag_query # Pipeline RAG principal
 
-load_dotenv()
+# ════════════════════════════════════════════════════════════════════
+# CARREGAMENTO DE SECRETS — funciona local e na nuvem
+#
+# Estratégia de fallback em duas etapas:
+# 1. Tenta carregar do st.secrets (Streamlit Community Cloud)
+# 2. Se não encontrar, cai para o .env local via load_dotenv()
+#
+# Isso permite que o mesmo código rode sem modificação
+# tanto na máquina do desenvolvedor quanto na nuvem.
+# ════════════════════════════════════════════════════════════════════
+load_dotenv() # Carrega o .env local (não faz nada se o arquivo não existir)
+
+try:
+    # Tenta ler as chaves do sistema de secrets do Streamlit Cloud
+    # st.secrets só existe quando o app roda na nuvem
+    os.environ["OPENAI_API_KEY"]   = st.secrets["OPENAI_API_KEY"]
+    os.environ["PINECONE_API_KEY"] = st.secrets["PINECONE_API_KEY"]
+    os.environ["PINECONE_INDEX_NAME"] = st.secrets["PINECONE_INDEX_NAME"]
+    os.environ["PINECONE_ENVIRONMENT"] = st.secrets["PINECONE_ENVIRONMENT"]
+except Exception:
+    # Se st.secrets não existir (ambiente local), os valores já foram
+    # carregados pelo load_dotenv() acima — não faz nada aqui
+    pass
 
 # ════════════════════════════════════════════════════════════════════
 # CONFIGURAÇÃO DA PÁGINA
