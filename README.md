@@ -26,6 +26,14 @@
 
 ---
 
+## 🌐 Demo ao vivo
+
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://intellidoc-rag.streamlit.app)
+
+> Acesse, faça upload de um PDF e converse com ele — sem instalar nada.
+
+---
+
 ## 📌 O que é este projeto?
 
 O **IntelliDoc RAG Multimodal** é um sistema completo de *Retrieval-Augmented Generation* (RAG) que permite fazer perguntas em linguagem natural sobre documentos técnicos — PDFs ou imagens com texto — e receber respostas precisas, fundamentadas e com citação da fonte.
