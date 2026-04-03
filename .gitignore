@@ -6,6 +6,11 @@ env/
 # Chaves e segredos - NUNCA commitar!
 .env
 
+# Secrets do Streamlit Cloud (apenas o template vai ao GitHub)
+.streamlit/secrets.toml
+# Arquivo de backup de secrets com chaves reais
+secrets*.toml
+
 # Python
 __pycache__/
 *.py[cod]
