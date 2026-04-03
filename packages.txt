@@ -1,11 +1,4 @@
-# Tesseract OCR — motor principal de reconhecimento de texto em imagens
 tesseract-ocr
-
-# Pacote de idioma português para o Tesseract
 tesseract-ocr-por
-
-# Pacote de idioma inglês para o Tesseract
 tesseract-ocr-eng
-
-# Biblioteca de processamento de imagens (dependência do Pillow/pytesseract)
 libgl1
