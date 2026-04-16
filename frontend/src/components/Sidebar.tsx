@@ -219,9 +219,42 @@ export default function Sidebar({ onClose }: SidebarProps) {
     inputRef.current?.click();
   }
 
-  // ── Helper: remove documento da lista local ───────────────
-  const removeDoc = (id: string) =>
-    setDocs((prev) => prev.filter((d) => d.id !== id));
+  // ── Estado: controla qual documento está sendo deletado ───
+  // Guarda o id do documento em processo de deleção para
+  // desabilitar o botão ✕ e evitar cliques múltiplos
+  const [deletandoId, setDeletandoId] = useState<string | null>(null);
+
+  // ── Handler: remove documento do Pinecone + lista visual ──
+  async function removeDoc(id: string) {
+    // Bloqueia se já há uma deleção em andamento
+    if (deletandoId) return;
+
+    const doc = docs.find((d) => d.id === id);
+    if (!doc) return;
+
+    setDeletandoId(id); // Marca este documento como "deletando"
+
+    try {
+      const resposta = await fetch(`${API_BASE}/documentos/${encodeURIComponent(doc.name)}`, {
+        method: "DELETE",
+      });
+
+      if (!resposta.ok) {
+        const erro = await resposta.json();
+        console.error("Erro ao deletar:", erro.detail);
+        return;
+      }
+
+      // Remove da lista visual só após confirmação da API
+      setDocs((prev) => prev.filter((d) => d.id !== id));
+
+    } catch (erro) {
+      console.error("Erro de rede ao deletar documento:", erro);
+    } finally {
+      // Sempre libera o bloqueio, mesmo se der erro
+      setDeletandoId(null);
+    }
+  }
 
   // ============================================================
   // HELPERS VISUAIS
@@ -397,9 +430,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 </div>
                 <button
                   onClick={() => removeDoc(doc.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 transition-all"
+                  disabled={deletandoId === doc.id}
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  <X className="w-3 h-3 text-destructive" />
+                  {deletandoId === doc.id
+                    ? <Loader2 className="w-3 h-3 text-destructive animate-spin" />
+                    : <X className="w-3 h-3 text-destructive" />
+                  }
                 </button>
               </motion.div>
             ))}

@@ -308,3 +308,61 @@ async def upload_documento(
         "arquivo": arquivo.filename,
         "mensagem": "Arquivo recebido. Indexação em andamento..."
     }
+
+# ------------------------------------------------------------
+# DELETE /documentos/{nome}
+# Remove um documento do Pinecone e do controle de ingestão.
+# O parâmetro {nome} é o nome do arquivo — ex: guia_git.pdf
+# ------------------------------------------------------------
+@app.delete("/documentos/{nome}")
+def deletar_documento(nome: str):
+    """
+    Remove todos os vetores do arquivo do Pinecone
+    e apaga a entrada do controle de ingestão (MD5).
+    """
+    # ── 1. Verifica se o arquivo está no controle ───────────
+    controle = carregar_controle()
+
+    if nome not in controle:
+        # 404 se o arquivo não existir no controle
+        raise HTTPException(
+            status_code=404,
+            detail=f"Documento '{nome}' não encontrado no controle de ingestão."
+        )
+
+    # ── 2. Busca os IDs dos vetores no Pinecone por metadata ─
+    # O Pinecone serverless permite deletar por filtro de metadata
+    # usando o método delete() com filter= ao invés de ids=
+    indice = conectar_pinecone()
+
+    try:
+        indice.delete(
+            filter={"arquivo": {"$eq": nome}}
+            # $eq = "equal" — deleta todos os vetores onde
+            # metadata["arquivo"] == nome do arquivo enviado
+        )
+        print(f"🗑️  Vetores de '{nome}' removidos do Pinecone")
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao deletar vetores do Pinecone: {str(e)}"
+        )
+
+    # ── 3. Remove do controle de ingestão ───────────────────
+    del controle[nome]
+    salvar_controle(controle)
+    print(f"✅ '{nome}' removido do controle de ingestão")
+
+    # ── 4. Remove o arquivo físico de data/raw/ ─────────────
+    # Opcional mas importante: evita que o arquivo seja
+    # reingerido na próxima execução do vector_store.py
+    caminho_raw = os.path.join("data", "raw", nome)
+    if os.path.exists(caminho_raw):
+        os.remove(caminho_raw)
+        print(f"🗑️  Arquivo físico '{nome}' removido de data/raw/")
+
+    return {
+        "status": "deletado",
+        "arquivo": nome,
+        "mensagem": f"'{nome}' removido do Pinecone, do controle e de data/raw/."
+    }
