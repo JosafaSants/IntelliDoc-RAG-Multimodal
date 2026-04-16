@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 216 40% 5%;
+    --foreground: 214 20% 85%;
+
+    --card: 216 30% 8%;
+    --card-foreground: 214 20% 85%;
+
+    --popover: 216 30% 8%;
+    --popover-foreground: 214 20% 85%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 216 25% 12%;
+    --secondary-foreground: 214 20% 85%;
+
+    --muted: 216 20% 14%;
+    --muted-foreground: 215 15% 45%;
+
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 216 20% 16%;
+    --input: 216 20% 16%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --bg-deep: 216 40% 5%;
+    --bg-surface: 216 30% 8%;
+    --bg-elevated: 216 25% 10%;
+    --border-subtle: 216 20% 14%;
+    --border-mid: 215 18% 20%;
+    --accent-glow: 217 91% 60%;
+    --text-primary: 214 20% 85%;
+    --text-secondary: 215 15% 45%;
+    --text-muted: 215 12% 30%;
+    --success: 142 71% 45%;
+    --warning: 48 96% 53%;
+
+    --sidebar-background: 216 30% 8%;
+    --sidebar-foreground: 214 20% 85%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 216 25% 12%;
+    --sidebar-accent-foreground: 214 20% 85%;
+    --sidebar-border: 216 20% 14%;
+    --sidebar-ring: 217 91% 60%;
+
+    --font-display: 'Rajdhani', sans-serif;
+    --font-body: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+  .glow-accent {
+    box-shadow: 0 0 30px hsl(var(--accent-glow) / 0.15);
+  }
+  .glow-accent-strong {
+    box-shadow: 0 0 40px hsl(var(--accent-glow) / 0.25);
+  }
+  .border-glow {
+    border-color: hsl(var(--accent-glow) / 0.4);
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--accent)), hsl(217 91% 75%));
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--bg-deep)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--border-mid)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-muted)); }
