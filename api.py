@@ -199,59 +199,83 @@ from vector_store import (
 EXTENSOES_IMAGEM = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
 
 
+# Importa o módulo de logging — registra erros com timestamp no terminal
+# Coloque esta linha junto aos outros imports no topo do arquivo
+import logging
+
+# Configura o nível mínimo de log para INFO
+# Isso faz aparecer mensagens de INFO, WARNING e ERROR no terminal
+logging.basicConfig(level=logging.INFO)
+
+# Cria um logger específico para este módulo
+# O nome __name__ vira "api" — aparece nos logs como [api]
+logger = logging.getLogger(__name__)
+
 def _ingerir_arquivo(caminho: str, nome_arquivo: str):
     """
     Função executada em background após o upload.
     Detecta o tipo do arquivo, extrai texto, gera embeddings
     e insere no Pinecone — exatamente como o vector_store.py faz.
+
+    Todo o corpo está dentro de try/except para que falhas de OCR,
+    OpenAI ou Pinecone sejam registradas no log em vez de sumirem
+    silenciosamente — o que tornaria o problema impossível de debugar.
     """
-    ext = os.path.splitext(nome_arquivo)[1].lower()
+    try:
+        ext = os.path.splitext(nome_arquivo)[1].lower()
 
-    # ── Extrai texto conforme o tipo do arquivo ────────────────
-    if ext == ".pdf":
-        # PDF nativo: extração direta com PyMuPDF
-        paginas = extrair_texto_pdf(caminho)
-    elif ext in EXTENSOES_IMAGEM:
-        # Imagem: OCR com Tesseract
-        texto = extrair_texto_imagem(caminho)
-        # Empacota no mesmo formato que o PDF retorna
-        paginas = [{"texto": texto, "pagina": 1, "arquivo": nome_arquivo}]
-    else:
-        # Tipo não suportado — não deveria chegar aqui por causa
-        # da validação no endpoint, mas é uma garantia extra
-        print(f"⚠️  Tipo não suportado: {ext}")
-        return
+        # ── Extrai texto conforme o tipo do arquivo ────────────────
+        if ext == ".pdf":
+            # PDF nativo: extração direta com PyMuPDF
+            paginas = extrair_texto_pdf(caminho)
+        elif ext in EXTENSOES_IMAGEM:
+            # Imagem: OCR com Tesseract
+            texto = extrair_texto_imagem(caminho)
+            # Empacota no mesmo formato que o PDF retorna
+            paginas = [{"texto": texto, "pagina": 1, "arquivo": nome_arquivo}]
+        else:
+            # Tipo não suportado — garantia extra além da validação do endpoint
+            logger.warning("Tipo não suportado ignorado: %s", ext)
+            return
 
-    # ── Divide em chunks com overlap ───────────────────────────
-    chunks = criar_chunks(paginas)
-    print(f"  📄 {nome_arquivo} → {len(chunks)} chunks")
+        # ── Divide em chunks com overlap ───────────────────────────
+        chunks = criar_chunks(paginas)
+        logger.info("%s → %d chunks gerados", nome_arquivo, len(chunks))
 
-    # ── Gera embeddings para cada chunk ────────────────────────
-    chunks_com_embedding = []
-    for i, chunk in enumerate(chunks):
-        emb = gerar_embedding(chunk["texto"])
-        chunks_com_embedding.append({
-            "id":     chunk["metadata"]["chunk_id"],
-            "values": emb,
-            "metadata": {
-                "texto":   chunk["texto"],
-                "arquivo": chunk["metadata"]["arquivo"],
-                "pagina":  chunk["metadata"]["pagina"],
-            }
-        })
+        # ── Gera embeddings para cada chunk ────────────────────────
+        chunks_com_embedding = []
+        for chunk in chunks:
+            emb = gerar_embedding(chunk["texto"])
+            chunks_com_embedding.append({
+                "id":     chunk["metadata"]["chunk_id"],
+                "values": emb,
+                "metadata": {
+                    "texto":   chunk["texto"],
+                    "arquivo": chunk["metadata"]["arquivo"],
+                    "pagina":  chunk["metadata"]["pagina"],
+                }
+            })
 
-    # ── Insere no Pinecone ──────────────────────────────────────
-    indice = conectar_pinecone()
-    inserir_chunks(indice, chunks_com_embedding)
+        # ── Insere no Pinecone ──────────────────────────────────────
+        indice = conectar_pinecone()
+        inserir_chunks(indice, chunks_com_embedding)
 
-    # ── Atualiza o controle MD5 ─────────────────────────────────
-    # Salva o hash do arquivo para que próximos uploads do mesmo
-    # arquivo só reprocessem se o conteúdo tiver mudado
-    controle = carregar_controle()
-    controle[nome_arquivo] = calcular_hash_arquivo(caminho)
-    salvar_controle(controle)
+        # ── Atualiza o controle MD5 ─────────────────────────────────
+        controle = carregar_controle()
+        controle[nome_arquivo] = calcular_hash_arquivo(caminho)
+        salvar_controle(controle)
 
-    print(f"✅ {nome_arquivo} indexado com sucesso!")
+        logger.info("✅ %s indexado com sucesso!", nome_arquivo)
+
+    except Exception as e:
+        # Registra o erro completo com stack trace no terminal
+        # exc_info=True faz o logger imprimir a linha exata que falhou
+        logger.error(
+            "❌ Falha ao ingerir '%s': %s",
+            nome_arquivo,
+            str(e),
+            exc_info=True   # ← imprime o stack trace completo no terminal
+        )
 
 
 @app.post("/upload")
@@ -354,12 +378,31 @@ def deletar_documento(nome: str):
     print(f"✅ '{nome}' removido do controle de ingestão")
 
     # ── 4. Remove o arquivo físico de data/raw/ ─────────────
-    # Opcional mas importante: evita que o arquivo seja
-    # reingerido na próxima execução do vector_store.py
-    caminho_raw = os.path.join("data", "raw", nome)
+    # SEGURANÇA — prevenção de Path Traversal:
+    # Se o frontend (ou um atacante) enviar nome="../../api.py",
+    # os.path.join geraria "data/raw/../../api.py" → resolveria para
+    # "api.py" e deletaria o próprio backend. Impedimos isso abaixo.
+
+    # pasta_segura é o caminho absoluto real de data/raw/
+    # os.path.realpath resolve ".." e symlinks — sem surpresas
+    pasta_segura = os.path.realpath(os.path.join("data", "raw"))
+
+    # caminho_raw é o caminho absoluto do arquivo que seria deletado
+    caminho_raw = os.path.realpath(os.path.join("data", "raw", nome))
+
+    # Verifica se caminho_raw está DENTRO de pasta_segura
+    # commonpath compara os prefixos reais dos dois caminhos
+    # Se o prefixo comum não for pasta_segura, o arquivo está fora — rejeitamos
+    if os.path.commonpath([caminho_raw, pasta_segura]) != pasta_segura:
+        raise HTTPException(
+            status_code=400,
+            detail="Nome de arquivo inválido."
+            # Mensagem genérica intencional — não revelar detalhes ao atacante
+        )
+
     if os.path.exists(caminho_raw):
         os.remove(caminho_raw)
-        print(f"🗑️  Arquivo físico '{nome}' removido de data/raw/")
+        logger.info("🗑️  Arquivo físico '%s' removido de data/raw/", nome)
 
     return {
         "status": "deletado",

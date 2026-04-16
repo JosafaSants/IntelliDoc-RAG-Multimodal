@@ -102,7 +102,7 @@ def processar_imagens_pasta(pasta_raw=os.path.join("data", "raw")):
 
     if not imagens:
         print("📭 Nenhuma imagem encontrada em data/raw/")
-        return
+        return []  # ← Retorna lista vazia — nunca None
     
     print(f"🖼️  {len(imagens)} imagem(ns) encontrada(s)\n")
 
