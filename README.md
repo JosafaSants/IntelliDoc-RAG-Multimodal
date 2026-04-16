@@ -11,7 +11,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.55+-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Tesseract](https://img.shields.io/badge/Tesseract-5.5-blue?style=for-the-badge)](https://github.com/tesseract-ocr/tesseract)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-v1.1_Em_Desenvolvimento-orange?style=for-the-badge)]()
+[![Status](https://img.shields.io/badge/Status-v1.2_Completa-green?style=for-the-badge)]()
 
 <br/>
 
@@ -60,8 +60,10 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🖼️ **OCR de Imagens** | Extração de texto de imagens via Tesseract 5.5 | ✅ v1.1 |
 | 🔗 **OCR no Pipeline** | Imagens indexadas junto com PDFs automaticamente | ✅ v1.1 |
 | 🖼️ **Upload de Imagens** | Interface aceita PNG, JPG, JPEG, BMP, TIFF, WEBP | ✅ v1.1 |
-| 💬 **Memória Persistente** | Histórico entre sessões | 🔜 v1.2 |
-| 🚀 **Deploy em Nuvem** | Streamlit Cloud ou Hugging Face Spaces | 🔜 v1.2 |
+| 💬 **Memória Persistente** | Histórico entre sessões | 🔜 |
+| 🚀 **Deploy em Nuvem** | Streamlit Cloud ou Hugging Face Spaces | ✅ v1.2 |
+| ⚡ **Backend FastAPI** | API HTTP conectando React ao pipeline RAG | ✅ v1.2 |
+| 🎨 **Interface React** | Frontend do Lovable.ai com tema dark tech | ✅ v1.2 |
 
 ---
 
@@ -72,25 +74,40 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 │                     IntelliDoc RAG Multimodal                     │
 └──────────────────────────────────────────────────────────────────┘
 
-  📂 INPUT               🔄 PROCESSING             🗄️ STORAGE
+  🎨 FRONTEND                🔌 BACKEND               🗄️ STORAGE
+  ┌──────────────────┐      ┌──────────────┐          ┌──────────────┐
+  │  React (Lovable) │─HTTP▶│   FastAPI    │          │              │
+  │  localhost:8080  │      │ localhost:   │─Embed───▶│   Pinecone   │
+  └──────────────────┘      │    8000      │  (novos) │  65+ vetores │
+                            └──────┬───────┘          └──────┬───────┘
+                                   │                         │
+  📂 INPUT               🔄 PROCESSING             🔍 RETRIEVAL ✅
   ┌──────────┐          ┌──────────────┐          ┌──────────────┐
-  │   PDF    │─PyMuPDF─▶│  Hash MD5    │          │              │
-  └──────────┘          │  Chunking    │─Embed───▶│   Pinecone   │
-  ┌──────────┐          │  +Metadata   │  (novos) │  65+ vetores │
-  │  Imagem  │─Tesseract▶  OCR ✅     │          │              │
-  └──────────┘          └──────────────┘          └──────┬───────┘
-                                                         │
-  💬 QUERY ✅            🤖 GENERATION ✅          🔍 RETRIEVAL ✅
+  │   PDF    │─PyMuPDF─▶│  Hash MD5    │          │    Busca     │
+  └──────────┘          │  Chunking    │          │  Semântica   │
+  ┌──────────┐          │  +Metadata   │          └──────────────┘
+  │  Imagem  │─Tesseract▶  OCR ✅     │
+  └──────────┘          └──────────────┘
+
+  💬 QUERY ✅            🤖 GENERATION ✅          📊 EVALUATION ✅
   ┌──────────┐          ┌──────────────┐          ┌──────────────┐
-  │ Pergunta │─Embed───▶│ GPT-4o-mini  │◀─Top-K───│    Busca     │
-  └──────────┘          │ + Contexto   │          │  Semântica   │
+  │ Pergunta │─Embed───▶│ GPT-4o-mini  │◀─Top-K───│    RAGAS     │
+  └──────────┘          │ + Contexto   │          │  Score 0.81  │
                         └──────┬───────┘          └──────────────┘
                                │
-  📊 EVALUATION ✅       📤 OUTPUT ✅
-  ┌──────────────┐      ┌──────────────┐
-  │    RAGAS     │◀─────│   Resposta   │
-  │  Score 0.81  │      │  + Fontes    │
-  └──────────────┘      └──────────────┘
+                        📤 OUTPUT ✅
+                        ┌──────────────┐
+                        │   Resposta   │
+                        │  + Fontes    │
+                        └──────────────┘
+
+  Frontend React (localhost:8080)
+          ↓ HTTP
+  Backend FastAPI (localhost:8000)
+          ↓
+  Módulos Python (rag_pipeline, vector_store, embeddings, ocr, evaluation)
+          ↓
+  Pinecone + GPT-4o-mini
 ```
 
 ---
@@ -190,6 +207,13 @@ intellidoc-rag/
 ├── 🔒 .env.example
 ├── 🚫 .gitignore
 ├── 🔧 fix_ssl.py
+├── 📄 api.py              # Backend FastAPI — endpoints HTTP
+│
+├── 📂 frontend/           # Interface React (Lovable.ai)
+│   ├── src/
+│   │   ├── components/    # ChatArea, Sidebar, WelcomeScreen
+│   │   └── types/         # Tipagens TypeScript
+│   └── package.json
 │
 ├── 📂 data/
 │   ├── raw/                   # PDFs e imagens originais
@@ -262,10 +286,24 @@ python fix_ssl.py
 python src/vector_store.py
 ```
 
-### 7. Inicie a interface
+### 7. Inicie a interface Streamlit
 
 ```bash
 streamlit run src/app.py
+```
+
+### Executar com React + FastAPI (novo)
+
+```bash
+# Terminal 1 — Backend
+uvicorn api:app --reload
+
+# Terminal 2 — Frontend
+cd frontend
+npm install
+npm run dev
+
+# Acesse: http://localhost:8080
 ```
 
 ---
@@ -280,11 +318,21 @@ streamlit run src/app.py
 - [x] **Fase 6** — Interface Streamlit — v1.0 publicada ✅
 - [x] **Fase 7** — OCR de imagens integrado ao pipeline ✅
 - [x] **Fase 7b** — Upload de imagens na interface Streamlit ✅
-- [ ] **Fase 8** — Deploy em nuvem 🔜 v1.2
+- [x] **Fase 8** — Deploy Streamlit Cloud ✅
+- [x] **Fase 9** — Backend FastAPI + Frontend React ✅ v1.2
+- [ ] **Fase 10** — Conectar Sidebar aos endpoints reais 🔜
+- [ ] **Fase 11** — Upload de documentos via interface React 🔜
 
 ---
 
 ## 📝 Diário de Desenvolvimento
+
+### ✅ Fase 9 — Backend FastAPI + Frontend React
+- `api.py` criado na raiz com endpoints: GET /, POST /chat, GET /documentos, GET /metricas
+- Frontend React do Lovable.ai integrado na pasta `frontend/`
+- `ChatArea.tsx` conectado à API real — pipeline completo funcionando
+- CORS configurado para localhost:8080
+- Pipeline validado: React → FastAPI → Pinecone → GPT-4o-mini → resposta na tela
 
 ### ✅ Fase 7b — Upload de imagens na interface
 - `app.py` atualizado para aceitar imagens no upload (PNG, JPG, JPEG, BMP, TIFF, WEBP)
