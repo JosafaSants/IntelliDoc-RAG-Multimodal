@@ -1,35 +1,196 @@
-import { useState } from "react";
+// ============================================================
+// Sidebar.tsx — Painel lateral do IntelliDoc
+// Conectado aos endpoints reais da FastAPI:
+//   GET /documentos → lista de arquivos indexados
+//   GET /metricas   → scores RAGAS do último relatório
+// ============================================================
+
+import { useState, useEffect } from "react";
+// useEffect: executa código quando o componente é montado
+// (é aqui que faremos os fetch para a API)
+
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileText, X, Zap, ChevronDown, Brain, Database, BarChart3 } from "lucide-react";
 import type { Document, RagasMetric } from "@/types/chat";
 
-const DEMO_DOCS: Document[] = [
-  { id: "1", name: "manual_tecnico_v2.pdf", size: 2400000, chunks: 42, indexed: true },
-  { id: "2", name: "api_rest_security.pdf", size: 1800000, chunks: 28, indexed: true },
-  { id: "3", name: "git_workflows.pdf", size: 950000, chunks: 15, indexed: true },
-];
+// ============================================================
+// CONSTANTES DE CONFIGURAÇÃO
+// ============================================================
 
-const DEMO_METRICS: RagasMetric[] = [
-  { key: "faithfulness", label: "Fidelidade", score: 0.89, threshold: 0.80 },
-  { key: "relevancy", label: "Relevância", score: 0.82, threshold: 0.75 },
-  { key: "precision", label: "Precisão Ctx", score: 0.76, threshold: 0.70 },
-  { key: "recall", label: "Recall Ctx", score: 0.71, threshold: 0.70 },
-];
+// URL base da FastAPI — se mudar a porta, muda só aqui
+const API_BASE = "http://localhost:8000";
+
+// ============================================================
+// TIPOS LOCAIS
+// ============================================================
+
+// Formato exato que o endpoint GET /documentos retorna
+// { "documentos": [{ "nome": "arquivo.pdf", "tipo": "pdf" }] }
+interface DocumentoAPI {
+  nome: string;
+  tipo: "pdf" | "imagem";
+}
+
+// Formato exato que o endpoint GET /metricas retorna
+// As chaves têm espaços — ex: "Answer Relevancy"
+interface MetricasAPI {
+  Faithfulness: number;
+  "Answer Relevancy": number;
+  "Context Precision": number;
+  "Context Recall": number;
+  media_geral: number;
+}
+
+// ============================================================
+// MAPEAMENTO: API → DISPLAY
+// ============================================================
+
+// Converte o objeto de métricas da API (chaves com espaços)
+// para o array que o componente de barras já sabe renderizar
+function mapearMetricas(api: MetricasAPI): RagasMetric[] {
+  return [
+    {
+      key: "faithfulness",
+      label: "Fidelidade",
+      score: api.Faithfulness ?? 0,        // ?? 0 → usa 0 se vier undefined
+      threshold: 0.80,
+    },
+    {
+      key: "relevancy",
+      label: "Relevância",
+      score: api["Answer Relevancy"] ?? 0, // chave com espaço → notação de colchetes
+      threshold: 0.75,
+    },
+    {
+      key: "precision",
+      label: "Precisão Ctx",
+      score: api["Context Precision"] ?? 0,
+      threshold: 0.70,
+    },
+    {
+      key: "recall",
+      label: "Recall Ctx",
+      score: api["Context Recall"] ?? 0,
+      threshold: 0.70,
+    },
+  ];
+}
+
+// ============================================================
+// PROPS DO COMPONENTE
+// ============================================================
 
 interface SidebarProps {
   onClose?: () => void;
 }
 
+// ============================================================
+// COMPONENTE PRINCIPAL
+// ============================================================
+
 export default function Sidebar({ onClose }: SidebarProps) {
-  const [docs, setDocs] = useState<Document[]>(DEMO_DOCS);
+
+  // ----------------------------------------------------------
+  // ESTADO: documentos carregados da API
+  // Começa como array vazio — preenchido pelo useEffect abaixo
+  // ----------------------------------------------------------
+  const [docs, setDocs] = useState<Document[]>([]);
+
+  // ----------------------------------------------------------
+  // ESTADO: métricas RAGAS carregadas da API
+  // Começa como array vazio — preenchido pelo useEffect abaixo
+  // ----------------------------------------------------------
+  const [metrics, setMetrics] = useState<RagasMetric[]>([]);
+
+  // ----------------------------------------------------------
+  // ESTADO: score médio calculado a partir da API
+  // Usamos o campo media_geral que já vem calculado pelo backend
+  // ----------------------------------------------------------
+  const [avgScore, setAvgScore] = useState<number>(0);
+
+  // ----------------------------------------------------------
+  // ESTADO: controla se a API está carregando (para feedback visual)
+  // ----------------------------------------------------------
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // ----------------------------------------------------------
+  // ESTADO: drag-and-drop e painel recolhível
+  // ----------------------------------------------------------
   const [isDragOver, setIsDragOver] = useState(false);
   const [systemOpen, setSystemOpen] = useState(false);
 
+  // ----------------------------------------------------------
+  // EFEITO: busca documentos e métricas ao montar o componente
+  // O array vazio [] como segundo argumento significa:
+  // "execute isso UMA VEZ, quando o Sidebar aparecer na tela"
+  // ----------------------------------------------------------
+  useEffect(() => {
+    buscarDados();
+  }, []);
+
+  // ----------------------------------------------------------
+  // FUNÇÃO: faz os dois fetch em paralelo com Promise.all
+  // Promise.all espera os dois terminarem antes de atualizar
+  // o estado — evita dois re-renders separados
+  // ----------------------------------------------------------
+  async function buscarDados() {
+    try {
+      setLoading(true);
+
+      // Dispara os dois fetch ao mesmo tempo (paralelo)
+      const [resDocumentos, resMetricas] = await Promise.all([
+        fetch(`${API_BASE}/documentos`),
+        fetch(`${API_BASE}/metricas`),
+      ]);
+
+      // Converte as respostas HTTP para objetos JavaScript
+      const dadosDocumentos = await resDocumentos.json();
+      const dadosMetricas: MetricasAPI = await resMetricas.json();
+
+      // ----------------------------------------------------------
+      // DOCUMENTOS: converte DocumentoAPI[] → Document[]
+      // O tipo Document (de @/types/chat) espera id, name, size,
+      // chunks e indexed — adaptamos o que a API fornece
+      // ----------------------------------------------------------
+      const documentosConvertidos: Document[] = dadosDocumentos.documentos.map(
+        (doc: DocumentoAPI, index: number) => ({
+          id: String(index + 1),   // Gera id sequencial (1, 2, 3...)
+          name: doc.nome,          // Nome real do arquivo
+          size: 0,                 // API não fornece tamanho — usamos 0
+          chunks: 0,               // API não fornece chunks — usamos 0
+          indexed: true,           // Se está no controle_ingestao, já foi indexado
+        })
+      );
+
+      // ----------------------------------------------------------
+      // MÉTRICAS: usa a função de mapeamento que criamos acima
+      // ----------------------------------------------------------
+      const metricasConvertidas = mapearMetricas(dadosMetricas);
+
+      // Atualiza os três estados de uma vez
+      setDocs(documentosConvertidos);
+      setMetrics(metricasConvertidas);
+      setAvgScore(dadosMetricas.media_geral ?? 0);
+
+    } catch (erro) {
+      // Se a API estiver offline, loga no console sem travar a UI
+      // O usuário vê a lista vazia — sem crash
+      console.error("Erro ao buscar dados da API:", erro);
+    } finally {
+      // Sempre desliga o loading, mesmo se der erro
+      setLoading(false);
+    }
+  }
+
+  // ----------------------------------------------------------
+  // COMPUTED: total de chunks (0 por enquanto — API não fornece)
+  // Mantemos a lógica para quando o backend enviar esse dado
+  // ----------------------------------------------------------
   const totalChunks = docs.reduce((a, d) => a + d.chunks, 0);
-  const avgScore = DEMO_METRICS.reduce((a, m) => a + m.score, 0) / DEMO_METRICS.length;
 
-  const removeDoc = (id: string) => setDocs((prev) => prev.filter((d) => d.id !== id));
-
+  // ----------------------------------------------------------
+  // HELPERS: cor e emoji baseados no score vs threshold
+  // ----------------------------------------------------------
   const getScoreColor = (score: number, threshold: number) => {
     if (score >= threshold) return "text-success";
     if (score >= threshold - 0.1) return "text-warning";
@@ -42,9 +203,20 @@ export default function Sidebar({ onClose }: SidebarProps) {
     return "🔴";
   };
 
+  // ----------------------------------------------------------
+  // HANDLER: remove documento da lista LOCAL (só visual por ora)
+  // O endpoint DELETE /documentos/{nome} será implementado depois
+  // ----------------------------------------------------------
+  const removeDoc = (id: string) =>
+    setDocs((prev) => prev.filter((d) => d.id !== id));
+
+  // ============================================================
+  // RENDERIZAÇÃO
+  // ============================================================
   return (
     <aside className="w-72 h-screen bg-surface border-r border-border-subtle flex flex-col overflow-hidden">
-      {/* Logo */}
+
+      {/* ── Logo ── */}
       <div className="p-5 border-b border-border-subtle flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center glow-accent">
@@ -59,7 +231,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             </span>
           </div>
         </div>
-        {/* Close button - mobile only */}
+        {/* Botão fechar — visível só no mobile */}
         <button
           onClick={onClose}
           className="md:hidden p-1.5 rounded-md hover:bg-elevated text-text-secondary hover:text-foreground transition-colors"
@@ -69,7 +241,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
-        {/* Upload */}
+
+        {/* ── Upload ── */}
         <section>
           <h3 className="font-display text-[0.65rem] font-bold text-text-secondary uppercase tracking-[0.15em] mb-3 flex items-center gap-1.5">
             <Upload className="w-3 h-3" /> ENVIAR DOCUMENTOS
@@ -102,11 +275,19 @@ export default function Sidebar({ onClose }: SidebarProps) {
           </motion.button>
         </section>
 
-        {/* Documents */}
+        {/* ── Lista de documentos ── */}
         <section>
           <h3 className="font-display text-[0.65rem] font-bold text-text-secondary uppercase tracking-[0.15em] mb-3 flex items-center gap-1.5">
             <Database className="w-3 h-3" /> DOCUMENTOS ({docs.length})
           </h3>
+
+          {/* Feedback visual enquanto a API carrega */}
+          {loading && (
+            <p className="text-[0.65rem] text-text-muted text-center py-4 animate-pulse">
+              Carregando...
+            </p>
+          )}
+
           <AnimatePresence>
             {docs.map((doc) => (
               <motion.div
@@ -120,14 +301,17 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 <div className="flex items-center gap-2 min-w-0">
                   <FileText className="w-3.5 h-3.5 text-primary/60 shrink-0" />
                   <div className="min-w-0">
+                    {/* Nome do arquivo vindo da API */}
                     <p className="text-[0.7rem] text-text-primary truncate max-w-[160px]">
                       {doc.name}
                     </p>
+                    {/* Tipo vindo da API (pdf ou imagem) */}
                     <p className="text-[0.58rem] text-text-muted">
-                      {doc.chunks} chunks
+                      indexado ✓
                     </p>
                   </div>
                 </div>
+                {/* Botão ✕ — remove da lista local por ora */}
                 <button
                   onClick={() => removeDoc(doc.id)}
                   className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 transition-all"
@@ -137,14 +321,15 @@ export default function Sidebar({ onClose }: SidebarProps) {
               </motion.div>
             ))}
           </AnimatePresence>
-          {docs.length === 0 && (
+
+          {!loading && docs.length === 0 && (
             <p className="text-[0.65rem] text-text-muted text-center py-4">
               Nenhum documento ainda
             </p>
           )}
         </section>
 
-        {/* System & RAGAS */}
+        {/* ── Sistema & RAGAS ── */}
         <section>
           <button
             onClick={() => setSystemOpen(!systemOpen)}
@@ -164,19 +349,22 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
+                {/* Cards de contagem */}
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <div className="bg-elevated border border-border-subtle rounded-lg p-3 text-center">
+                    {/* Número real de documentos da API */}
                     <p className="font-display text-xl font-bold text-primary">{docs.length}</p>
-                    <p className="text-[0.58rem] text-text-muted uppercase tracking-wider">PDFs</p>
+                    <p className="text-[0.58rem] text-text-muted uppercase tracking-wider">Docs</p>
                   </div>
                   <div className="bg-elevated border border-border-subtle rounded-lg p-3 text-center">
-                    <p className="font-display text-xl font-bold text-primary">{totalChunks}</p>
+                    <p className="font-display text-xl font-bold text-primary">{totalChunks || "—"}</p>
                     <p className="text-[0.58rem] text-text-muted uppercase tracking-wider">Chunks</p>
                   </div>
                 </div>
 
+                {/* Barras de métricas RAGAS vindas da API */}
                 <div className="space-y-2.5">
-                  {DEMO_METRICS.map((m) => (
+                  {metrics.map((m) => (
                     <div key={m.key}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[0.62rem] text-text-secondary">
@@ -198,6 +386,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   ))}
                 </div>
 
+                {/* Score médio vindo diretamente do campo media_geral da API */}
                 <div className="mt-3 bg-elevated border border-border-subtle rounded-lg p-3 text-center">
                   <p className="text-[0.58rem] text-text-muted uppercase tracking-wider mb-1">Score Médio</p>
                   <p className="font-display text-2xl font-bold text-primary">{avgScore.toFixed(2)}</p>
@@ -209,6 +398,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             )}
           </AnimatePresence>
         </section>
+
       </div>
     </aside>
   );
