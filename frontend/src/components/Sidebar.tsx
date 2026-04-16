@@ -25,7 +25,10 @@ import type { Document, RagasMetric } from "@/types/chat";
 // CONSTANTES
 // ============================================================
 
-const API_BASE = "http://localhost:8000";
+// Lê a URL da API da variável de ambiente Vite
+// Em desenvolvimento: usa http://localhost:8000 como fallback
+// Em produção: defina VITE_API_URL no ambiente de deploy
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 // Extensões aceitas pelo backend — espelha EXTENSOES_IMAGEM do api.py
 const EXTENSOES_ACEITAS = ".pdf,.png,.jpg,.jpeg,.bmp,.tiff,.webp";

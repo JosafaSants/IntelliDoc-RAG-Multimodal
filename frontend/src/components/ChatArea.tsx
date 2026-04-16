@@ -1,79 +1,144 @@
+// ============================================================
+// ChatArea.tsx — Área principal de chat do IntelliDoc
+// Conectado ao endpoint real da FastAPI:
+//   POST /chat → recebe pergunta, retorna resposta + fontes
+// ============================================================
+
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Trash2, FileText, Brain, Menu } from "lucide-react";
 import type { ChatMessage } from "@/types/chat";
 import WelcomeScreen from "./WelcomeScreen";
 
-// Função que chama a API FastAPI real em vez de simular uma resposta
-// fetch() é a função nativa do navegador para fazer requisições HTTP
-const chamarAPI = async (question: string): Promise<{ content: string; sources: string[] }> => {
-  const response = await fetch("http://localhost:8000/chat", {
-    method: "POST",                              // Método POST pois estamos enviando dados
-    headers: { "Content-Type": "application/json" }, // Informa que o corpo é JSON
-    body: JSON.stringify({ pergunta: question }), // Serializa o objeto para string JSON
+// ============================================================
+// CONFIGURAÇÃO DA API
+// ============================================================
+
+// Lê a URL da API da variável de ambiente Vite
+// Em desenvolvimento: usa http://localhost:8000 como fallback
+// Em produção: defina VITE_API_URL no arquivo frontend/.env
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+
+// ============================================================
+// FUNÇÃO DE CHAMADA À API
+// ============================================================
+
+// Função que chama o endpoint POST /chat da FastAPI
+// Separada do componente para facilitar manutenção e testes
+const chamarAPI = async (
+  question: string
+): Promise<{ content: string; sources: string[] }> => {
+
+  // fetch() é a função nativa do navegador para requisições HTTP
+  const response = await fetch(`${API_BASE}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pergunta: question }),
   });
 
   if (!response.ok) {
-    // Se a API retornar erro (ex: 500), lança uma exceção com a mensagem
+    // Se a API retornar erro (ex: 500), lança exceção com o status
     throw new Error(`Erro na API: ${response.status}`);
   }
 
-  const data = await response.json(); // Converte a resposta JSON em objeto JavaScript
+  const data = await response.json();
 
   return {
-    content: data.resposta,  // Campo "resposta" que definimos no PerguntaResponse do Python
-    sources: data.fontes,    // Campo "fontes" que definimos no PerguntaResponse do Python
+    content: data.resposta, // Campo definido em PerguntaResponse no Python
+    sources: data.fontes,   // Campo definido em PerguntaResponse no Python
   };
 };
+
+// ============================================================
+// PROPS
+// ============================================================
 
 interface ChatAreaProps {
   onMenuClick?: () => void;
 }
 
+// ============================================================
+// COMPONENTE
+// ============================================================
+
 export default function ChatArea({ onMenuClick }: ChatAreaProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
+  const [input,     setInput]     = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Rola para o final sempre que uma nova mensagem chega
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages]);
+
+  // ============================================================
+  // HANDLER DE ENVIO
+  // ============================================================
 
   const handleSend = async (text?: string) => {
     const question = text || input.trim();
     if (!question || isLoading) return;
 
+    // Adiciona a mensagem do usuário imediatamente na tela
     const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: question,
+      id:        crypto.randomUUID(),
+      role:      "user",
+      content:   question,
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
 
-    const result = await chamarAPI(question);
+    try {
+      // ── Chama a API e aguarda a resposta ──────────────────
+      const result = await chamarAPI(question);
 
-    const assistantMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content: result.content,
-      sources: result.sources,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, assistantMsg]);
-    setIsLoading(false);
+      const assistantMsg: ChatMessage = {
+        id:        crypto.randomUUID(),
+        role:      "assistant",
+        content:   result.content,
+        sources:   result.sources,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+
+    } catch (erro) {
+      // ── Exibe mensagem de erro no chat (não trava o input) ─
+      // Sem este bloco, qualquer falha de rede deixava isLoading
+      // em true para sempre — o usuário precisaria recarregar a página
+      console.error("Erro ao chamar a API:", erro);
+
+      const erroMsg: ChatMessage = {
+        id:        crypto.randomUUID(),
+        role:      "assistant",
+        content:   "⚠️ Não foi possível conectar à API. Verifique se o servidor está rodando e tente novamente.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, erroMsg]);
+
+    } finally {
+      // ── Sempre libera o input, mesmo se der erro ──────────
+      // finally executa independente de sucesso ou falha
+      setIsLoading(false);
+    }
   };
 
   const clearChat = () => setMessages([]);
 
+  // ============================================================
+  // RENDERIZAÇÃO
+  // ============================================================
+
   return (
     <div className="flex-1 flex flex-col h-screen min-w-0">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border-subtle flex items-center justify-between shrink-0 gap-3">
-        {/* Mobile menu button */}
         <button
           onClick={onMenuClick}
           className="md:hidden p-2 -ml-1 rounded-lg hover:bg-elevated text-text-secondary hover:text-foreground transition-colors"
@@ -89,6 +154,7 @@ export default function ChatArea({ onMenuClick }: ChatAreaProps) {
             Sistema RAG Multimodal · Converse com seus documentos técnicos
           </p>
         </div>
+
         {messages.length > 0 && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
@@ -104,7 +170,7 @@ export default function ChatArea({ onMenuClick }: ChatAreaProps) {
         )}
       </div>
 
-      {/* Messages */}
+      {/* ── Mensagens ── */}
       {messages.length === 0 ? (
         <WelcomeScreen onSuggestionClick={(text) => handleSend(text)} />
       ) : (
@@ -151,6 +217,7 @@ export default function ChatArea({ onMenuClick }: ChatAreaProps) {
             ))}
           </AnimatePresence>
 
+          {/* Indicador de carregamento */}
           {isLoading && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -177,7 +244,7 @@ export default function ChatArea({ onMenuClick }: ChatAreaProps) {
         </div>
       )}
 
-      {/* Input */}
+      {/* ── Input ── */}
       <div className="p-3 sm:p-4 border-t border-border-subtle shrink-0">
         <div className="flex gap-2 max-w-4xl mx-auto">
           <div className="flex-1 relative">

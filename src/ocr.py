@@ -6,11 +6,27 @@ from PIL import Image, ImageFilter, ImageEnhance # Biblioteca para manipulação
 # Buscando os outros módulos do projeto
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Busca o local no qual o tesseract está instalado
-# O pytesseract precisa saber o local do tesseract para funcionar, caso contrário, ele não conseguirá realizar o OCR
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Users\JosafaBarbosadosSant\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
+# ============================================================
+# CONFIGURAÇÃO DO TESSERACT
+# ============================================================
+# O pytesseract precisa saber onde o executável do Tesseract
+# está instalado. Em vez de hardcodar o caminho (o que quebra
+# em qualquer outra máquina), lemos do .env via variável de
+# ambiente TESSERACT_CMD.
+#
+# Se a variável não estiver definida, usamos o caminho padrão
+# de instalação do Windows como fallback — ajuste conforme
+# seu sistema operacional:
+#   Windows : C:\Program Files\Tesseract-OCR\tesseract.exe
+#   Linux   : /usr/bin/tesseract  (geralmente já no PATH)
+#   Mac     : /usr/local/bin/tesseract
+# ============================================================
+
+TESSERACT_CMD = os.getenv(
+    "TESSERACT_CMD",
+    r"C:\Program Files\Tesseract-OCR\tesseract.exe"  # fallback padrão Windows
 )
+pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 
 
 
