@@ -60,10 +60,12 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🖼️ **OCR de Imagens** | Extração de texto de imagens via Tesseract 5.5 | ✅ v1.1 |
 | 🔗 **OCR no Pipeline** | Imagens indexadas junto com PDFs automaticamente | ✅ v1.1 |
 | 🖼️ **Upload de Imagens** | Interface aceita PNG, JPG, JPEG, BMP, TIFF, WEBP | ✅ v1.1 |
+| 🚀 **Deploy em Nuvem** | Streamlit Cloud — intellidoc-rag.streamlit.app | ✅ v1.2 |
+| ⚡ **Backend FastAPI** | 6 endpoints REST conectando React ao pipeline RAG | ✅ v1.2 |
+| 🎨 **Interface React** | Frontend React + Vite + Tailwind com tema dark tech | ✅ v1.2 |
+| 📤 **Upload via React** | Drag-and-drop com feedback: enviando/indexando/erro | ✅ v1.2 |
+| 🗑️ **Deleção via React** | Remove documento do Pinecone + controle + disco | ✅ v1.2 |
 | 💬 **Memória Persistente** | Histórico entre sessões | 🔜 |
-| 🚀 **Deploy em Nuvem** | Streamlit Cloud ou Hugging Face Spaces | ✅ v1.2 |
-| ⚡ **Backend FastAPI** | API HTTP conectando React ao pipeline RAG | ✅ v1.2 |
-| 🎨 **Interface React** | Frontend do Lovable.ai com tema dark tech | ✅ v1.2 |
 
 ---
 
@@ -124,7 +126,9 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 
 ---
 
-## 🖥️ Interface Streamlit
+## 🖥️ Interfaces
+
+### Streamlit (deploy em nuvem)
 
 **Sidebar:**
 - `📤 ENVIAR DOCUMENTOS` — upload de PDFs e imagens com indexação automática
@@ -137,6 +141,25 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 - Botão para limpar o histórico
 
 **Formatos aceitos no upload:** `.pdf` `.png` `.jpg` `.jpeg` `.bmp` `.tiff` `.webp`
+
+### React + FastAPI (interface local)
+
+**Sidebar conectada à API real:**
+- Lista documentos indexados vindos do backend
+- Métricas RAGAS com barras de progresso em tempo real
+- Upload via drag-and-drop ou botão — feedback visual por estado: enviando / indexando / já indexado / erro
+- Deleção real: remove vetores do Pinecone + entrada no controle + arquivo em `data/raw/`
+
+**Endpoints FastAPI (`api.py`):**
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/` | Health check |
+| POST | `/chat` | `{ "pergunta": "..." }` → `{ "resposta": "...", "fontes": [...] }` |
+| GET | `/documentos` | Lista arquivos do `controle_ingestao.json` |
+| GET | `/metricas` | Lê scores do `relatorio_ragas.json` |
+| POST | `/upload` | Recebe arquivo, salva em `data/raw/`, ingestão em background |
+| DELETE | `/documentos/{nome}` | Remove vetores do Pinecone + controle + arquivo físico |
 
 ---
 
@@ -191,7 +214,10 @@ Chunks + Pinecone    → Mesmo pipeline dos PDFs ✅
 | Deduplicação | Hash MD5 | built-in |
 | OCR Engine | Tesseract | 5.5 ✅ |
 | OCR Python | pytesseract + Pillow | 0.3+ ✅ |
-| Avaliação | RAGAS | 0.4+ |
+| Avaliação | RAGAS | 0.4.3 |
+| API Backend | FastAPI + Uvicorn | latest |
+| Frontend | React + TypeScript + Vite | latest |
+| Estilo | Tailwind CSS + Framer Motion | latest |
 | Env vars | python-dotenv | 1.0+ |
 
 ---
@@ -320,17 +346,22 @@ npm run dev
 - [x] **Fase 7b** — Upload de imagens na interface Streamlit ✅
 - [x] **Fase 8** — Deploy Streamlit Cloud ✅
 - [x] **Fase 9** — Backend FastAPI + Frontend React ✅ v1.2
-- [ ] **Fase 10** — Conectar Sidebar aos endpoints reais 🔜
-- [ ] **Fase 11** — Upload de documentos via interface React 🔜
+- [x] **Fase 10** — Sidebar conectada aos endpoints reais ✅ v1.2
+- [x] **Fase 11** — Upload e deleção de documentos via interface React ✅ v1.2
+- [ ] **Fase 12** — Memória persistente entre sessões 🔜
+- [ ] **Fase 13** — Deploy do stack React + FastAPI em nuvem 🔜
 
 ---
 
 ## 📝 Diário de Desenvolvimento
 
-### ✅ Fase 9 — Backend FastAPI + Frontend React
-- `api.py` criado na raiz com endpoints: GET /, POST /chat, GET /documentos, GET /metricas
-- Frontend React do Lovable.ai integrado na pasta `frontend/`
+### ✅ Fases 9–11 — Stack React + FastAPI completo
+- `api.py` criado na raiz com 6 endpoints: GET /, POST /chat, GET /documentos, GET /metricas, POST /upload, DELETE /documentos/{nome}
+- Frontend React + TypeScript + Vite + Tailwind + Framer Motion integrado em `frontend/`
 - `ChatArea.tsx` conectado à API real — pipeline completo funcionando
+- `Sidebar.tsx` conectada: lista documentos reais, métricas RAGAS ao vivo, upload drag-and-drop, deleção real
+- Upload com feedback por estado: enviando / indexando / já indexado / erro
+- Deleção remove vetores do Pinecone + entrada no controle + arquivo físico em `data/raw/`
 - CORS configurado para localhost:8080
 - Pipeline validado: React → FastAPI → Pinecone → GPT-4o-mini → resposta na tela
 
