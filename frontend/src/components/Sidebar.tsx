@@ -1,38 +1,44 @@
 // ============================================================
 // Sidebar.tsx — Painel lateral do IntelliDoc
 // Conectado aos endpoints reais da FastAPI:
-//   GET /documentos → lista de arquivos indexados
-//   GET /metricas   → scores RAGAS do último relatório
+//   GET  /documentos → lista de arquivos indexados
+//   GET  /metricas   → scores RAGAS do último relatório
+//   POST /upload     → envia arquivo e dispara ingestão
 // ============================================================
 
-import { useState, useEffect } from "react";
-// useEffect: executa código quando o componente é montado
-// (é aqui que faremos os fetch para a API)
+import { useState, useEffect, useRef } from "react";
+// useRef: referência direta ao elemento <input type="file"> oculto
+// necessário para abrir o seletor de arquivos via botão customizado
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, FileText, X, Zap, ChevronDown, Brain, Database, BarChart3 } from "lucide-react";
+import {
+  Upload, FileText, X, Zap, ChevronDown,
+  Brain, Database, BarChart3, Loader2, CheckCircle, AlertCircle
+} from "lucide-react";
+// Loader2      → ícone de spinner (animado com spin)
+// CheckCircle  → ícone de sucesso
+// AlertCircle  → ícone de erro
+
 import type { Document, RagasMetric } from "@/types/chat";
 
 // ============================================================
-// CONSTANTES DE CONFIGURAÇÃO
+// CONSTANTES
 // ============================================================
 
-// URL base da FastAPI — se mudar a porta, muda só aqui
 const API_BASE = "http://localhost:8000";
 
+// Extensões aceitas pelo backend — espelha EXTENSOES_IMAGEM do api.py
+const EXTENSOES_ACEITAS = ".pdf,.png,.jpg,.jpeg,.bmp,.tiff,.webp";
+
 // ============================================================
-// TIPOS LOCAIS
+// TIPOS
 // ============================================================
 
-// Formato exato que o endpoint GET /documentos retorna
-// { "documentos": [{ "nome": "arquivo.pdf", "tipo": "pdf" }] }
 interface DocumentoAPI {
   nome: string;
   tipo: "pdf" | "imagem";
 }
 
-// Formato exato que o endpoint GET /metricas retorna
-// As chaves têm espaços — ex: "Answer Relevancy"
 interface MetricasAPI {
   Faithfulness: number;
   "Answer Relevancy": number;
@@ -41,43 +47,29 @@ interface MetricasAPI {
   media_geral: number;
 }
 
+// Status possíveis do upload — controla o feedback visual
+type UploadStatus =
+  | { tipo: "idle" }
+  | { tipo: "enviando"; nome: string }
+  | { tipo: "indexando"; nome: string }
+  | { tipo: "ja_indexado"; nome: string }
+  | { tipo: "erro"; mensagem: string };
+
 // ============================================================
-// MAPEAMENTO: API → DISPLAY
+// MAPEAMENTO API → DISPLAY
 // ============================================================
 
-// Converte o objeto de métricas da API (chaves com espaços)
-// para o array que o componente de barras já sabe renderizar
 function mapearMetricas(api: MetricasAPI): RagasMetric[] {
   return [
-    {
-      key: "faithfulness",
-      label: "Fidelidade",
-      score: api.Faithfulness ?? 0,        // ?? 0 → usa 0 se vier undefined
-      threshold: 0.80,
-    },
-    {
-      key: "relevancy",
-      label: "Relevância",
-      score: api["Answer Relevancy"] ?? 0, // chave com espaço → notação de colchetes
-      threshold: 0.75,
-    },
-    {
-      key: "precision",
-      label: "Precisão Ctx",
-      score: api["Context Precision"] ?? 0,
-      threshold: 0.70,
-    },
-    {
-      key: "recall",
-      label: "Recall Ctx",
-      score: api["Context Recall"] ?? 0,
-      threshold: 0.70,
-    },
+    { key: "faithfulness", label: "Fidelidade",   score: api.Faithfulness          ?? 0, threshold: 0.80 },
+    { key: "relevancy",    label: "Relevância",    score: api["Answer Relevancy"]   ?? 0, threshold: 0.75 },
+    { key: "precision",    label: "Precisão Ctx",  score: api["Context Precision"]  ?? 0, threshold: 0.70 },
+    { key: "recall",       label: "Recall Ctx",    score: api["Context Recall"]     ?? 0, threshold: 0.70 },
   ];
 }
 
 // ============================================================
-// PROPS DO COMPONENTE
+// PROPS
 // ============================================================
 
 interface SidebarProps {
@@ -85,112 +77,156 @@ interface SidebarProps {
 }
 
 // ============================================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE
 // ============================================================
 
 export default function Sidebar({ onClose }: SidebarProps) {
 
-  // ----------------------------------------------------------
-  // ESTADO: documentos carregados da API
-  // Começa como array vazio — preenchido pelo useEffect abaixo
-  // ----------------------------------------------------------
-  const [docs, setDocs] = useState<Document[]>([]);
-
-  // ----------------------------------------------------------
-  // ESTADO: métricas RAGAS carregadas da API
-  // Começa como array vazio — preenchido pelo useEffect abaixo
-  // ----------------------------------------------------------
-  const [metrics, setMetrics] = useState<RagasMetric[]>([]);
-
-  // ----------------------------------------------------------
-  // ESTADO: score médio calculado a partir da API
-  // Usamos o campo media_geral que já vem calculado pelo backend
-  // ----------------------------------------------------------
+  // ── Estado: dados da API ──────────────────────────────────
+  const [docs,     setDocs]     = useState<Document[]>([]);
+  const [metrics,  setMetrics]  = useState<RagasMetric[]>([]);
   const [avgScore, setAvgScore] = useState<number>(0);
+  const [loading,  setLoading]  = useState<boolean>(true);
 
-  // ----------------------------------------------------------
-  // ESTADO: controla se a API está carregando (para feedback visual)
-  // ----------------------------------------------------------
-  const [loading, setLoading] = useState<boolean>(true);
+  // ── Estado: UI ───────────────────────────────────────────
+  const [isDragOver,  setIsDragOver]  = useState(false);
+  const [systemOpen,  setSystemOpen]  = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>({ tipo: "idle" });
 
-  // ----------------------------------------------------------
-  // ESTADO: drag-and-drop e painel recolhível
-  // ----------------------------------------------------------
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [systemOpen, setSystemOpen] = useState(false);
+  // ── Ref: input file oculto ────────────────────────────────
+  // Usamos um <input type="file"> invisível e disparamos o
+  // clique nele quando o usuário clica em "Indexar Agora"
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // ----------------------------------------------------------
-  // EFEITO: busca documentos e métricas ao montar o componente
-  // O array vazio [] como segundo argumento significa:
-  // "execute isso UMA VEZ, quando o Sidebar aparecer na tela"
-  // ----------------------------------------------------------
+  // ── Efeito: carrega dados ao montar ───────────────────────
   useEffect(() => {
     buscarDados();
   }, []);
 
-  // ----------------------------------------------------------
-  // FUNÇÃO: faz os dois fetch em paralelo com Promise.all
-  // Promise.all espera os dois terminarem antes de atualizar
-  // o estado — evita dois re-renders separados
-  // ----------------------------------------------------------
+  // ============================================================
+  // FUNÇÕES DE DADOS
+  // ============================================================
+
   async function buscarDados() {
     try {
       setLoading(true);
-
-      // Dispara os dois fetch ao mesmo tempo (paralelo)
-      const [resDocumentos, resMetricas] = await Promise.all([
+      const [resDoc, resMet] = await Promise.all([
         fetch(`${API_BASE}/documentos`),
         fetch(`${API_BASE}/metricas`),
       ]);
+      const dadosDoc = await resDoc.json();
+      const dadosMet: MetricasAPI = await resMet.json();
 
-      // Converte as respostas HTTP para objetos JavaScript
-      const dadosDocumentos = await resDocumentos.json();
-      const dadosMetricas: MetricasAPI = await resMetricas.json();
-
-      // ----------------------------------------------------------
-      // DOCUMENTOS: converte DocumentoAPI[] → Document[]
-      // O tipo Document (de @/types/chat) espera id, name, size,
-      // chunks e indexed — adaptamos o que a API fornece
-      // ----------------------------------------------------------
-      const documentosConvertidos: Document[] = dadosDocumentos.documentos.map(
-        (doc: DocumentoAPI, index: number) => ({
-          id: String(index + 1),   // Gera id sequencial (1, 2, 3...)
-          name: doc.nome,          // Nome real do arquivo
-          size: 0,                 // API não fornece tamanho — usamos 0
-          chunks: 0,               // API não fornece chunks — usamos 0
-          indexed: true,           // Se está no controle_ingestao, já foi indexado
-        })
+      setDocs(
+        dadosDoc.documentos.map((doc: DocumentoAPI, i: number) => ({
+          id:      String(i + 1),
+          name:    doc.nome,
+          size:    0,
+          chunks:  0,
+          indexed: true,
+        }))
       );
-
-      // ----------------------------------------------------------
-      // MÉTRICAS: usa a função de mapeamento que criamos acima
-      // ----------------------------------------------------------
-      const metricasConvertidas = mapearMetricas(dadosMetricas);
-
-      // Atualiza os três estados de uma vez
-      setDocs(documentosConvertidos);
-      setMetrics(metricasConvertidas);
-      setAvgScore(dadosMetricas.media_geral ?? 0);
-
+      setMetrics(mapearMetricas(dadosMet));
+      setAvgScore(dadosMet.media_geral ?? 0);
     } catch (erro) {
-      // Se a API estiver offline, loga no console sem travar a UI
-      // O usuário vê a lista vazia — sem crash
       console.error("Erro ao buscar dados da API:", erro);
     } finally {
-      // Sempre desliga o loading, mesmo se der erro
       setLoading(false);
     }
   }
 
-  // ----------------------------------------------------------
-  // COMPUTED: total de chunks (0 por enquanto — API não fornece)
-  // Mantemos a lógica para quando o backend enviar esse dado
-  // ----------------------------------------------------------
-  const totalChunks = docs.reduce((a, d) => a + d.chunks, 0);
+  // ============================================================
+  // FUNÇÕES DE UPLOAD
+  // ============================================================
 
-  // ----------------------------------------------------------
-  // HELPERS: cor e emoji baseados no score vs threshold
-  // ----------------------------------------------------------
+  async function enviarArquivo(arquivo: File) {
+    // ── 1. Feedback imediato: "enviando" ─────────────────────
+    setUploadStatus({ tipo: "enviando", nome: arquivo.name });
+
+    try {
+      // ── 2. Monta o FormData — formato que o FastAPI espera ──
+      // FormData serializa o arquivo como multipart/form-data
+      // O campo deve se chamar "arquivo" — igual ao parâmetro
+      // definido no endpoint: arquivo: UploadFile = File(...)
+      const formData = new FormData();
+      formData.append("arquivo", arquivo);
+
+      // ── 3. Envia para POST /upload ──────────────────────────
+      const resposta = await fetch(`${API_BASE}/upload`, {
+        method: "POST",
+        body: formData,
+        // NÃO definimos Content-Type manualmente — o browser
+        // define automaticamente com o boundary correto para
+        // multipart/form-data quando usamos FormData
+      });
+
+      if (!resposta.ok) {
+        // Erro HTTP (ex: 400 tipo não suportado)
+        const erro = await resposta.json();
+        setUploadStatus({ tipo: "erro", mensagem: erro.detail ?? "Erro desconhecido" });
+        return;
+      }
+
+      const resultado = await resposta.json();
+
+      // ── 4. Atualiza o status conforme a resposta ────────────
+      if (resultado.status === "ja_indexado") {
+        setUploadStatus({ tipo: "ja_indexado", nome: arquivo.name });
+      } else {
+        // status === "indexando" — backend processando em background
+        setUploadStatus({ tipo: "indexando", nome: arquivo.name });
+
+        // Aguarda 3 segundos e recarrega a lista de documentos
+        // para refletir o arquivo recém-indexado na sidebar
+        setTimeout(() => {
+          buscarDados();
+          setUploadStatus({ tipo: "idle" });
+        }, 3000);
+        return;
+      }
+    } catch (erro) {
+      // Erro de rede (API offline, CORS etc.)
+      setUploadStatus({ tipo: "erro", mensagem: "Não foi possível conectar à API." });
+    }
+
+    // Limpa o status após 3 segundos (para casos não-indexando)
+    setTimeout(() => setUploadStatus({ tipo: "idle" }), 3000);
+  }
+
+  // ── Handler: drop de arquivo na zona ─────────────────────
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    // dataTransfer.files contém os arquivos arrastados
+    const arquivo = e.dataTransfer.files[0];
+    if (arquivo) enviarArquivo(arquivo);
+  }
+
+  // ── Handler: seleção via input file oculto ────────────────
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0];
+    if (arquivo) enviarArquivo(arquivo);
+
+    // Limpa o valor do input para que o mesmo arquivo
+    // possa ser selecionado novamente se necessário
+    e.target.value = "";
+  }
+
+  // ── Handler: clique no botão "Indexar Agora" ─────────────
+  function handleIndexarClick() {
+    // Dispara o clique no input file oculto
+    inputRef.current?.click();
+  }
+
+  // ── Helper: remove documento da lista local ───────────────
+  const removeDoc = (id: string) =>
+    setDocs((prev) => prev.filter((d) => d.id !== id));
+
+  // ============================================================
+  // HELPERS VISUAIS
+  // ============================================================
+
   const getScoreColor = (score: number, threshold: number) => {
     if (score >= threshold) return "text-success";
     if (score >= threshold - 0.1) return "text-warning";
@@ -203,16 +239,41 @@ export default function Sidebar({ onClose }: SidebarProps) {
     return "🔴";
   };
 
-  // ----------------------------------------------------------
-  // HANDLER: remove documento da lista LOCAL (só visual por ora)
-  // O endpoint DELETE /documentos/{nome} será implementado depois
-  // ----------------------------------------------------------
-  const removeDoc = (id: string) =>
-    setDocs((prev) => prev.filter((d) => d.id !== id));
+  const totalChunks = docs.reduce((a, d) => a + d.chunks, 0);
 
   // ============================================================
-  // RENDERIZAÇÃO
+  // RENDERIZAÇÃO DO FEEDBACK DE UPLOAD
   // ============================================================
+
+  function renderUploadStatus() {
+    // Não renderiza nada quando está ocioso
+    if (uploadStatus.tipo === "idle") return null;
+
+    // Mapeia cada status para ícone + cor + mensagem
+    const config = {
+      enviando:    { icon: <Loader2 className="w-3 h-3 animate-spin" />, cor: "text-primary",     texto: `Enviando ${uploadStatus.tipo !== "idle" && "nome" in uploadStatus ? uploadStatus.nome : ""}...` },
+      indexando:   { icon: <Loader2 className="w-3 h-3 animate-spin" />, cor: "text-primary",     texto: `Indexando ${"nome" in uploadStatus ? uploadStatus.nome : ""}...` },
+      ja_indexado: { icon: <CheckCircle className="w-3 h-3" />,          cor: "text-success",     texto: `Já indexado` },
+      erro:        { icon: <AlertCircle className="w-3 h-3" />,          cor: "text-destructive", texto: "mensagem" in uploadStatus ? uploadStatus.mensagem : "Erro" },
+    }[uploadStatus.tipo];
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        className={`mt-2 flex items-center gap-1.5 text-[0.65rem] ${config.cor}`}
+      >
+        {config.icon}
+        <span>{config.texto}</span>
+      </motion.div>
+    );
+  }
+
+  // ============================================================
+  // RENDERIZAÇÃO PRINCIPAL
+  // ============================================================
+
   return (
     <aside className="w-72 h-screen bg-surface border-r border-border-subtle flex flex-col overflow-hidden">
 
@@ -231,7 +292,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
             </span>
           </div>
         </div>
-        {/* Botão fechar — visível só no mobile */}
         <button
           onClick={onClose}
           className="md:hidden p-1.5 rounded-md hover:bg-elevated text-text-secondary hover:text-foreground transition-colors"
@@ -247,6 +307,17 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <h3 className="font-display text-[0.65rem] font-bold text-text-secondary uppercase tracking-[0.15em] mb-3 flex items-center gap-1.5">
             <Upload className="w-3 h-3" /> ENVIAR DOCUMENTOS
           </h3>
+
+          {/* Input file oculto — acionado pelo botão abaixo */}
+          <input
+            ref={inputRef}
+            type="file"
+            accept={EXTENSOES_ACEITAS}
+            onChange={handleInputChange}
+            className="hidden"
+          />
+
+          {/* Zona de drag-and-drop */}
           <div
             className={`border border-dashed rounded-lg p-6 text-center transition-all duration-200 cursor-pointer ${
               isDragOver
@@ -255,7 +326,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
             }`}
             onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
             onDragLeave={() => setIsDragOver(false)}
-            onDrop={() => setIsDragOver(false)}
+            onDrop={handleDrop}
+            onClick={handleIndexarClick}
           >
             <Upload className="w-5 h-5 mx-auto mb-2 text-text-muted" />
             <p className="text-[0.68rem] text-text-secondary">
@@ -265,14 +337,29 @@ export default function Sidebar({ onClose }: SidebarProps) {
               PDF, PNG, JPG, WEBP
             </p>
           </div>
+
+          {/* Botão "Indexar Agora" — abre o seletor de arquivos */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="mt-3 w-full py-2.5 rounded-md bg-elevated border border-border-mid font-display text-[0.75rem] font-bold text-primary uppercase tracking-wider hover:bg-primary hover:text-primary-foreground hover:glow-accent transition-all duration-200"
+            onClick={handleIndexarClick}
+            disabled={uploadStatus.tipo === "enviando" || uploadStatus.tipo === "indexando"}
+            className="mt-3 w-full py-2.5 rounded-md bg-elevated border border-border-mid font-display text-[0.75rem] font-bold text-primary uppercase tracking-wider hover:bg-primary hover:text-primary-foreground hover:glow-accent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Zap className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
-            Indexar Agora
+            {uploadStatus.tipo === "enviando" || uploadStatus.tipo === "indexando" ? (
+              <Loader2 className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5 animate-spin" />
+            ) : (
+              <Zap className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
+            )}
+            {uploadStatus.tipo === "enviando" ? "Enviando..." :
+             uploadStatus.tipo === "indexando" ? "Indexando..." :
+             "Indexar Agora"}
           </motion.button>
+
+          {/* Feedback de status do upload */}
+          <AnimatePresence>
+            {renderUploadStatus()}
+          </AnimatePresence>
         </section>
 
         {/* ── Lista de documentos ── */}
@@ -281,7 +368,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <Database className="w-3 h-3" /> DOCUMENTOS ({docs.length})
           </h3>
 
-          {/* Feedback visual enquanto a API carrega */}
           {loading && (
             <p className="text-[0.65rem] text-text-muted text-center py-4 animate-pulse">
               Carregando...
@@ -301,17 +387,14 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 <div className="flex items-center gap-2 min-w-0">
                   <FileText className="w-3.5 h-3.5 text-primary/60 shrink-0" />
                   <div className="min-w-0">
-                    {/* Nome do arquivo vindo da API */}
                     <p className="text-[0.7rem] text-text-primary truncate max-w-[160px]">
                       {doc.name}
                     </p>
-                    {/* Tipo vindo da API (pdf ou imagem) */}
                     <p className="text-[0.58rem] text-text-muted">
                       indexado ✓
                     </p>
                   </div>
                 </div>
-                {/* Botão ✕ — remove da lista local por ora */}
                 <button
                   onClick={() => removeDoc(doc.id)}
                   className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 transition-all"
@@ -349,10 +432,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                {/* Cards de contagem */}
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <div className="bg-elevated border border-border-subtle rounded-lg p-3 text-center">
-                    {/* Número real de documentos da API */}
                     <p className="font-display text-xl font-bold text-primary">{docs.length}</p>
                     <p className="text-[0.58rem] text-text-muted uppercase tracking-wider">Docs</p>
                   </div>
@@ -362,7 +443,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   </div>
                 </div>
 
-                {/* Barras de métricas RAGAS vindas da API */}
                 <div className="space-y-2.5">
                   {metrics.map((m) => (
                     <div key={m.key}>
@@ -386,7 +466,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   ))}
                 </div>
 
-                {/* Score médio vindo diretamente do campo media_geral da API */}
                 <div className="mt-3 bg-elevated border border-border-subtle rounded-lg p-3 text-center">
                   <p className="text-[0.58rem] text-text-muted uppercase tracking-wider mb-1">Score Médio</p>
                   <p className="font-display text-2xl font-bold text-primary">{avgScore.toFixed(2)}</p>

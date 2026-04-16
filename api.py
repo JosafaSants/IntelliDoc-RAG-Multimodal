@@ -169,3 +169,142 @@ def obter_metricas():
         relatorio = json.load(f)
 
     return relatorio
+
+# ------------------------------------------------------------
+# POST /upload
+# Recebe um arquivo (PDF ou imagem) enviado pelo frontend,
+# salva em data/raw/ e executa a ingestão completa no Pinecone
+# ------------------------------------------------------------
+
+# BackgroundTasks permite que a ingestão rode em segundo plano
+# sem bloquear a resposta HTTP para o frontend
+from fastapi import BackgroundTasks
+
+# HTTPException permite retornar erros HTTP com mensagem clara
+from fastapi import HTTPException
+
+# Importa as funções de processamento que já existem no projeto
+from ingest import extrair_texto_pdf, criar_chunks
+from ocr import extrair_texto_imagem
+from embeddings import gerar_embedding
+from vector_store import (
+    conectar_pinecone,
+    inserir_chunks,
+    calcular_hash_arquivo,
+    carregar_controle,
+    salvar_controle,
+)
+
+# Extensões de imagem aceitas pelo pipeline OCR
+EXTENSOES_IMAGEM = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
+
+
+def _ingerir_arquivo(caminho: str, nome_arquivo: str):
+    """
+    Função executada em background após o upload.
+    Detecta o tipo do arquivo, extrai texto, gera embeddings
+    e insere no Pinecone — exatamente como o vector_store.py faz.
+    """
+    ext = os.path.splitext(nome_arquivo)[1].lower()
+
+    # ── Extrai texto conforme o tipo do arquivo ────────────────
+    if ext == ".pdf":
+        # PDF nativo: extração direta com PyMuPDF
+        paginas = extrair_texto_pdf(caminho)
+    elif ext in EXTENSOES_IMAGEM:
+        # Imagem: OCR com Tesseract
+        texto = extrair_texto_imagem(caminho)
+        # Empacota no mesmo formato que o PDF retorna
+        paginas = [{"texto": texto, "pagina": 1, "arquivo": nome_arquivo}]
+    else:
+        # Tipo não suportado — não deveria chegar aqui por causa
+        # da validação no endpoint, mas é uma garantia extra
+        print(f"⚠️  Tipo não suportado: {ext}")
+        return
+
+    # ── Divide em chunks com overlap ───────────────────────────
+    chunks = criar_chunks(paginas)
+    print(f"  📄 {nome_arquivo} → {len(chunks)} chunks")
+
+    # ── Gera embeddings para cada chunk ────────────────────────
+    chunks_com_embedding = []
+    for i, chunk in enumerate(chunks):
+        emb = gerar_embedding(chunk["texto"])
+        chunks_com_embedding.append({
+            "id":     chunk["metadata"]["chunk_id"],
+            "values": emb,
+            "metadata": {
+                "texto":   chunk["texto"],
+                "arquivo": chunk["metadata"]["arquivo"],
+                "pagina":  chunk["metadata"]["pagina"],
+            }
+        })
+
+    # ── Insere no Pinecone ──────────────────────────────────────
+    indice = conectar_pinecone()
+    inserir_chunks(indice, chunks_com_embedding)
+
+    # ── Atualiza o controle MD5 ─────────────────────────────────
+    # Salva o hash do arquivo para que próximos uploads do mesmo
+    # arquivo só reprocessem se o conteúdo tiver mudado
+    controle = carregar_controle()
+    controle[nome_arquivo] = calcular_hash_arquivo(caminho)
+    salvar_controle(controle)
+
+    print(f"✅ {nome_arquivo} indexado com sucesso!")
+
+
+@app.post("/upload")
+async def upload_documento(
+    background_tasks: BackgroundTasks,
+    arquivo: UploadFile = File(...)
+):
+    """
+    Recebe um arquivo do frontend, valida o tipo,
+    salva em data/raw/ e dispara a ingestão em background.
+    Retorna imediatamente para não travar o frontend.
+    """
+    # ── Valida a extensão do arquivo ────────────────────────────
+    ext = os.path.splitext(arquivo.filename)[1].lower()
+    extensoes_aceitas = {".pdf"} | EXTENSOES_IMAGEM
+
+    if ext not in extensoes_aceitas:
+        # 400 Bad Request com mensagem clara para o frontend
+        raise HTTPException(
+            status_code=400,
+            detail=f"Tipo '{ext}' não suportado. Aceitos: PDF, PNG, JPG, WEBP, BMP, TIFF"
+        )
+
+    # ── Salva o arquivo em data/raw/ ────────────────────────────
+    caminho_destino = os.path.join("data", "raw", arquivo.filename)
+
+    # Lê o conteúdo do arquivo enviado pelo frontend (bytes)
+    conteudo = await arquivo.read()
+
+    with open(caminho_destino, "wb") as f:
+        f.write(conteudo)
+
+    print(f"💾 Arquivo salvo: {caminho_destino}")
+
+    # ── Verifica se já está indexado com mesmo hash ─────────────
+    controle = carregar_controle()
+    hash_novo = calcular_hash_arquivo(caminho_destino)
+
+    if arquivo.filename in controle and controle[arquivo.filename] == hash_novo:
+        # Arquivo idêntico já indexado — não precisa reprocessar
+        return {
+            "status": "ja_indexado",
+            "arquivo": arquivo.filename,
+            "mensagem": "Arquivo já estava indexado e não foi alterado."
+        }
+
+    # ── Dispara a ingestão em background ───────────────────────
+    # background_tasks.add_task faz a ingestão rodar DEPOIS que
+    # o frontend já recebeu a resposta HTTP — sem timeout
+    background_tasks.add_task(_ingerir_arquivo, caminho_destino, arquivo.filename)
+
+    return {
+        "status": "indexando",
+        "arquivo": arquivo.filename,
+        "mensagem": "Arquivo recebido. Indexação em andamento..."
+    }
