@@ -44,7 +44,10 @@ def gerar_embeddings_chunks(caminho_chunks="data/processed/chunks.json"):
             print(f"   ✅ {i + 1}/{len(chunks)} embeddings gerados")
 
     print(f"\n🎉 Todos os embeddings prontos!")
-    print(f"   Dimensão do vetor: {len(chunks_com_embeddings[0]['values'])}")
+    # Verifica se há embeddings antes de acessar o índice 0
+    # Sem isso, uma lista vazia causaria IndexError silencioso
+    if chunks_com_embeddings:
+        print(f"   Dimensão do vetor: {len(chunks_com_embeddings[0]['values'])}")
     return chunks_com_embeddings
 
 

@@ -103,6 +103,9 @@ if __name__ == "__main__":
 
     if chunks:
         print(f"\n📋 Exemplo de chunk:")
-        print(f"   Arquivo : {chunks[5]['metadata']['arquivo']}")
-        print(f"   Página  : {chunks[5]['metadata']['pagina']}")
-        print(f"   Texto   : {chunks[5]['texto'][:150]}...")
+        # Usa min() para evitar IndexError quando há menos de 6 chunks
+        # Se houver 3 chunks, pega o índice 2 (último) em vez de tentar o 5
+        exemplo = chunks[min(5, len(chunks) - 1)]
+        print(f"   Arquivo : {exemplo['metadata']['arquivo']}")
+        print(f"   Página  : {exemplo['metadata']['pagina']}")
+        print(f"   Texto   : {exemplo['texto'][:150]}...")

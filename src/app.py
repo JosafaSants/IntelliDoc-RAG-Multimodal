@@ -455,11 +455,19 @@ with st.sidebar:
         st.caption(f"{len(uploads)} arquivo(s) pronto(s)")
         if st.button("⚡ INDEXAR AGORA", key="btn_idx"):
             with st.spinner("Indexando..."):
-                qtd, msg = processar_uploads(uploads)
-            if qtd > 0:
-                st.success(msg)
-            else:
-                st.info(msg)
+                try:
+                    qtd, msg = processar_uploads(uploads)
+                    if qtd > 0:
+                        st.success(msg)
+                    else:
+                        st.info(msg)
+                except Exception as e:
+                    # Captura erros de OCR, OpenAI ou Pinecone
+                    # sem expor traceback completo ao usuário
+                    st.error("Erro ao processar arquivos. Tente novamente.")
+                    # Importa logging aqui para registrar o erro internamente
+                    import logging
+                    logging.exception("Falha em processar_uploads: %s", str(e))
             st.rerun()
 
     st.divider()
@@ -563,6 +571,12 @@ if not st.session_state.mensagens:
       <div class="chip">🔀 Como o Git ajuda no desenvolvimento?</div>
       <div class="chip">🧮 O que são embeddings e para que servem?</div>
       <div class="chip">📊 Quais métricas o RAGAS utiliza?</div>
+      <div style="margin-top:1rem;padding:8px 12px;background:var(--bg-deep);
+        border:1px solid var(--border-subtle);border-radius:6px;
+        color:var(--text-muted);font-size:0.65rem;line-height:1.4;">
+        ⚠️ Suas perguntas são processadas pela API da OpenAI (EUA).<br>
+        Não inclua dados pessoais sensíveis nos documentos ou perguntas.
+      </div>
     </div>
     """, unsafe_allow_html=True)
 else:

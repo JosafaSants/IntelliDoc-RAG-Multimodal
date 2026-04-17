@@ -101,12 +101,28 @@ def raiz():
 # ------------------------------------------------------------
 @app.post("/chat", response_model=PerguntaResponse)
 def chat(request: PerguntaRequest):
-    # request.pergunta contém o texto digitado pelo usuário no frontend
-    # rag_query já faz tudo: embedding → busca Pinecone → GPT-4o-mini → resposta
-    resultado = rag_query(request.pergunta)
+    # ── Valida se a pergunta não está vazia ─────────────────────
+    # request.pergunta pode ser uma string só de espaços — strip() remove isso
+    if not request.pergunta.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Pergunta não pode ser vazia."
+        )
 
-    # rag_query retorna um dicionário com "resposta" e "fontes"
-    # Aqui extraímos os dois campos e devolvemos para o frontend
+    # ── Executa o pipeline RAG com tratamento de erro ───────────
+    # Sem try/except, qualquer falha da OpenAI ou Pinecone retornaria
+    # HTTP 500 com traceback completo exposto ao frontend
+    try:
+        resultado = rag_query(request.pergunta)
+    except Exception as e:
+        # Loga o erro completo internamente para debug
+        logger.error("Erro no pipeline RAG: %s", str(e), exc_info=True)
+        # Devolve mensagem genérica ao frontend — não expor detalhes internos
+        raise HTTPException(
+            status_code=503,  # 503 = Service Unavailable — OpenAI ou Pinecone fora
+            detail="Serviço temporariamente indisponível. Tente novamente."
+        )
+
     return PerguntaResponse(
         resposta=resultado["resposta"],
         fontes=resultado["fontes"]
@@ -288,7 +304,15 @@ async def upload_documento(
     salva em data/raw/ e dispara a ingestão em background.
     Retorna imediatamente para não travar o frontend.
     """
-    # ── Valida a extensão do arquivo ────────────────────────────
+    # ── Valida se o nome do arquivo foi informado ───────────────
+    # arquivo.filename pode ser None se o cliente omitir o campo
+    # os.path.splitext(None) lançaria TypeError antes da validação
+    if not arquivo.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="Nome do arquivo não informado."
+        )
+
     ext = os.path.splitext(arquivo.filename)[1].lower()
     extensoes_aceitas = {".pdf"} | EXTENSOES_IMAGEM
 
@@ -299,37 +323,62 @@ async def upload_documento(
             detail=f"Tipo '{ext}' não suportado. Aceitos: PDF, PNG, JPG, WEBP, BMP, TIFF"
         )
 
-    # ── Salva o arquivo em data/raw/ ────────────────────────────
-    caminho_destino = os.path.join("data", "raw", arquivo.filename)
+    # ── Sanitiza o nome do arquivo antes de salvar ──────────────
+    # os.path.basename descarta qualquer componente de diretório
+    # Exemplo: "subdir/evil.pdf" → "evil.pdf" — sem criar subpastas
+    import re
+    nome_seguro = os.path.basename(arquivo.filename).replace("\x00", "")
 
-    # Lê o conteúdo do arquivo enviado pelo frontend (bytes)
+    # Permite apenas letras, números, hífen, underscore, ponto e espaço
+    # Rejeita caracteres Unicode de controle, pipes, aspas, etc.
+    if not re.match(r'^[\w\-. ]+$', nome_seguro):
+        raise HTTPException(
+            status_code=400,
+            detail="Nome de arquivo contém caracteres inválidos."
+        )
+
+    # ── Salva o arquivo em data/raw/ ────────────────────────────
+    caminho_destino = os.path.join("data", "raw", nome_seguro)
+
+    # ── Lê e valida o tamanho do arquivo ───────────────────────
+    # await arquivo.read() carrega tudo em RAM — sem limite, um
+    # arquivo de 1 GB esgotaria a memória do servidor antes de
+    # qualquer verificação. Validamos o tamanho logo após a leitura.
+    MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB — limite razoável para PDFs e imagens
+
     conteudo = await arquivo.read()
+
+    if len(conteudo) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,  # 413 = Payload Too Large — código HTTP correto para este caso
+            detail="Arquivo excede o tamanho máximo permitido de 50 MB."
+        )
 
     with open(caminho_destino, "wb") as f:
         f.write(conteudo)
 
-    print(f"💾 Arquivo salvo: {caminho_destino}")
+    logger.info("💾 Arquivo salvo: %s", caminho_destino)
 
     # ── Verifica se já está indexado com mesmo hash ─────────────
     controle = carregar_controle()
     hash_novo = calcular_hash_arquivo(caminho_destino)
 
-    if arquivo.filename in controle and controle[arquivo.filename] == hash_novo:
+    if nome_seguro in controle and controle[nome_seguro] == hash_novo:
         # Arquivo idêntico já indexado — não precisa reprocessar
         return {
             "status": "ja_indexado",
-            "arquivo": arquivo.filename,
+            "arquivo": nome_seguro,
             "mensagem": "Arquivo já estava indexado e não foi alterado."
         }
 
     # ── Dispara a ingestão em background ───────────────────────
-    # background_tasks.add_task faz a ingestão rodar DEPOIS que
-    # o frontend já recebeu a resposta HTTP — sem timeout
-    background_tasks.add_task(_ingerir_arquivo, caminho_destino, arquivo.filename)
+    # nome_seguro garante que a ingestão usa o nome sanitizado,
+    # não o nome original enviado pelo cliente
+    background_tasks.add_task(_ingerir_arquivo, caminho_destino, nome_seguro)
 
     return {
         "status": "indexando",
-        "arquivo": arquivo.filename,
+        "arquivo": nome_seguro,
         "mensagem": "Arquivo recebido. Indexação em andamento..."
     }
 
