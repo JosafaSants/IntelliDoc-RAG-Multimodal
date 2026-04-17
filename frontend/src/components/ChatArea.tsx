@@ -67,6 +67,45 @@ export default function ChatArea({ onMenuClick }: ChatAreaProps) {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // ── Carrega o histórico do backend ao abrir a página ──────
+  // GET /historico retorna as últimas 20 mensagens do SQLite
+  // Converte o formato da API para o formato ChatMessage do React
+  useEffect(() => {
+    const carregarHistorico = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/historico?limite=20`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        // Converte cada entrada do histórico em dois ChatMessages:
+        // um para o usuário e um para o assistente
+        const msgs: ChatMessage[] = [];
+        for (const entrada of data.historico) {
+          msgs.push({
+            id:        crypto.randomUUID(),
+            role:      "user",
+            content:   entrada.pergunta,
+            timestamp: new Date(entrada.criado_em),
+          });
+          msgs.push({
+            id:        crypto.randomUUID(),
+            role:      "assistant",
+            content:   entrada.resposta,
+            sources:   entrada.fontes,
+            timestamp: new Date(entrada.criado_em),
+          });
+        }
+        setMessages(msgs);
+      } catch (e) {
+        // Falha silenciosa — histórico não é crítico para o app funcionar
+        console.warn("Não foi possível carregar o histórico:", e);
+      }
+    };
+
+    carregarHistorico();
+  }, []); // [] = executa apenas uma vez ao montar o componente
+
   // Rola para o final sempre que uma nova mensagem chega
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -128,7 +167,16 @@ export default function ChatArea({ onMenuClick }: ChatAreaProps) {
     }
   };
 
-  const clearChat = () => setMessages([]);
+  const clearChat = async () => {
+    // Apaga o histórico no backend antes de limpar a tela
+    // Se a API falhar, limpa a tela mesmo assim (UX > consistência aqui)
+    try {
+      await fetch(`${API_BASE}/historico`, { method: "DELETE" });
+    } catch (e) {
+      console.warn("Não foi possível limpar o histórico no backend:", e);
+    }
+    setMessages([]);
+  };
 
   // ============================================================
   // RENDERIZAÇÃO
