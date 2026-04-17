@@ -17,6 +17,10 @@ from pydantic import BaseModel  # BaseModel define a estrutura exata dos dados J
 from dotenv import load_dotenv  # Carrega as variáveis do .env (chaves OpenAI, Pinecone etc.)
 import shutil  # Biblioteca padrão para manipular arquivos — usaremos para salvar uploads em data/raw/
 import json  # Para ler o relatorio_ragas.json que já existe em data/processed/
+from memory import inicializar_banco, carregar_historico, limpar_historico  # Memória persistente SQLite
+
+# Garante que o banco SQLite existe quando a API sobe
+inicializar_banco()
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -463,3 +467,46 @@ def deletar_documento(nome: str):
         "arquivo": nome,
         "mensagem": f"'{nome}' removido do Pinecone, do controle e de data/raw/."
     }
+
+# ------------------------------------------------------------
+# GET /historico
+# Retorna o histórico de conversas salvo no SQLite
+# O frontend usa isso para recarregar o chat ao abrir a página
+# ------------------------------------------------------------
+@app.get("/historico")
+def obter_historico(limite: int = 20):
+    """
+    Retorna as últimas N mensagens em ordem cronológica.
+    Parâmetro opcional: ?limite=50 — padrão é 20.
+    """
+    try:
+        historico = carregar_historico(limite=limite)
+        return {"historico": historico}
+    except Exception as e:
+        logger.error("Erro ao carregar histórico: %s", str(e), exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao carregar histórico."
+        )
+
+
+# ------------------------------------------------------------
+# DELETE /historico
+# Apaga todo o histórico de conversas do SQLite
+# Chamado pelo botão "Limpar histórico" no frontend
+# ------------------------------------------------------------
+@app.delete("/historico")
+def deletar_historico():
+    """
+    Apaga todas as conversas do banco SQLite.
+    Ação irreversível — o frontend deve pedir confirmação.
+    """
+    try:
+        limpar_historico()
+        return {"status": "ok", "mensagem": "Histórico apagado com sucesso."}
+    except Exception as e:
+        logger.error("Erro ao limpar histórico: %s", str(e), exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao apagar histórico."
+        )
