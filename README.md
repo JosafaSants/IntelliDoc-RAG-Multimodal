@@ -67,7 +67,7 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🗑️ **Deleção via React** | Remove documento do Pinecone + controle + disco | ✅ v1.2 |
 | 🔒 **Sanitização de Upload** | Validação de filename, null bytes, tamanho máximo 50MB | ✅ v1.2 |
 | 🛡️ **Tratamento de Erros** | try/except em todos os endpoints e funções críticas | ✅ v1.2 |
-| 💬 **Memória Persistente** | Histórico entre sessões | 🔜 |
+| 💬 **Memória Persistente** | Histórico entre sessões via SQLite | ✅ v1.2 |
 
 ---
 
@@ -257,6 +257,7 @@ intellidoc-rag/
     ├── ingest.py          # ✅ Ingestão PDFs + integração OCR
     ├── embeddings.py      # ✅ Embeddings via OpenAI
     ├── vector_store.py    # ✅ Pinecone + ingestão incremental PDFs e imagens
+    ├── memory.py          # ✅ Memória persistente — SQLite histórico de conversas
     ├── rag_pipeline.py    # ✅ Pipeline RAG end-to-end
     ├── evaluation.py      # ✅ Avaliação RAGAS
     ├── ocr.py             # ✅ OCR de imagens com Tesseract
@@ -352,7 +353,7 @@ npm run dev
 - [x] **Fase 9** — Backend FastAPI + Frontend React ✅ v1.2
 - [x] **Fase 10** — Sidebar conectada aos endpoints reais ✅ v1.2
 - [x] **Fase 11** — Upload e deleção de documentos via interface React ✅ v1.2
-- [ ] **Fase 12** — Memória persistente entre sessões 🔜
+- [x] **Fase 12** — Memória persistente entre sessões (SQLite) ✅
 - [ ] **Fase 13** — Deploy do stack React + FastAPI em nuvem 🔜
 
 ---
