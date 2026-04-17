@@ -11,7 +11,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.55+-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Tesseract](https://img.shields.io/badge/Tesseract-5.5-blue?style=for-the-badge)](https://github.com/tesseract-ocr/tesseract)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-v1.2_Completa-green?style=for-the-badge)]()
+[![Status](https://img.shields.io/badge/Status-v1.2_Estavel-brightgreen?style=for-the-badge)]()
 
 <br/>
 
@@ -65,6 +65,8 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🎨 **Interface React** | Frontend React + Vite + Tailwind com tema dark tech | ✅ v1.2 |
 | 📤 **Upload via React** | Drag-and-drop com feedback: enviando/indexando/erro | ✅ v1.2 |
 | 🗑️ **Deleção via React** | Remove documento do Pinecone + controle + disco | ✅ v1.2 |
+| 🔒 **Sanitização de Upload** | Validação de filename, null bytes, tamanho máximo 50MB | ✅ v1.2 |
+| 🛡️ **Tratamento de Erros** | try/except em todos os endpoints e funções críticas | ✅ v1.2 |
 | 💬 **Memória Persistente** | Histórico entre sessões | 🔜 |
 
 ---
@@ -344,6 +346,8 @@ npm run dev
 - [x] **Fase 6** — Interface Streamlit — v1.0 publicada ✅
 - [x] **Fase 7** — OCR de imagens integrado ao pipeline ✅
 - [x] **Fase 7b** — Upload de imagens na interface Streamlit ✅
+- [x] **Fase 7c** — Correções de segurança: path traversal, logging e retorno None ✅
+- [x] **Fase 7d** — Segunda rodada de segurança: sanitização de upload, limites, LGPD ✅ v1.2
 - [x] **Fase 8** — Deploy Streamlit Cloud ✅
 - [x] **Fase 9** — Backend FastAPI + Frontend React ✅ v1.2
 - [x] **Fase 10** — Sidebar conectada aos endpoints reais ✅ v1.2
@@ -354,6 +358,26 @@ npm run dev
 ---
 
 ## 📝 Diário de Desenvolvimento
+
+### ✅ Correções de Segurança (code review)
+- **Path traversal no DELETE** — o endpoint `DELETE /documentos/{nome}` usava o nome do arquivo diretamente no `os.path.join` sem validação. Um valor como `../../api.py` poderia deletar arquivos fora de `data/raw/`. Corrigido com `os.path.realpath` + `os.path.commonpath`: agora o endpoint verifica que o caminho resolvido está dentro do diretório permitido antes de deletar qualquer coisa.
+- **Erros silenciosos no upload em background** — a função `_ingerir_arquivo` rodava sem nenhum `try/except`. Se a API da OpenAI falhasse ou o Pinecone retornasse erro, o problema desaparecia sem deixar rastro e o documento ficava marcado como "indexando" para sempre. Corrigido com bloco `try/except` geral e `logging.exception` para registrar o erro completo com stack trace.
+- **Retorno `None` implícito no OCR** — `processar_imagens_pasta` em `ocr.py` retornava `None` quando não havia imagens na pasta, em vez de retornar `[]`. Qualquer código que tentasse iterar sobre esse resultado travaria com `TypeError`. Corrigido para `return []`, mantendo o contrato de tipo esperado pelos chamadores.
+- **Erro do Pinecone expunha detalhes internos** — exceções no `DELETE /documentos/{nome}` propagavam mensagens brutas com nome do índice e região para o cliente. Corrigido com `logger.error` interno e resposta genérica HTTP 500 ao frontend.
+- **`deletar_pdf()` não limpava o Pinecone** — ao deletar um documento pela interface Streamlit, o arquivo físico era removido mas os vetores permaneciam no Pinecone e continuavam aparecendo nas respostas. Corrigido com chamada `indice.delete(filter={"arquivo": {"$eq": nome}})`.
+- **`listar_pdfs()` ignorava imagens** — a sidebar do Streamlit listava apenas arquivos `.pdf`, deixando imagens indexadas invisíveis na lista. Corrigido com filtro para todas as extensões aceitas (PNG, JPG, JPEG, BMP, TIFF, WEBP).
+- **`__main__` de `ingest.py` chamava função inexistente** — o bloco de execução direta chamava `ingerir_todos_pdfs()`, que não existia mais após refatoração. Corrigido para `processar_todos_arquivos()`.
+- **Log registrava pergunta completa (LGPD)** — `rag_pipeline.py` imprimia a pergunta inteira no terminal. Em produção, logs com dados do usuário violam a LGPD. Corrigido com truncamento para os primeiros 50 caracteres.
+
+### ✅ Segunda Rodada de Correções (code review)
+- **`IndexError` em lista vazia no `embeddings.py`** — ao final da função `gerar_embeddings_chunks`, o código acessava `chunks_com_embeddings[0]` para exibir a dimensão do vetor sem verificar se a lista estava vazia. Se nenhum chunk fosse carregado, a execução terminava com `IndexError`. Corrigido com guard `if chunks_com_embeddings:` antes do acesso.
+- **`IndexError` no `__main__` de `ingest.py`** — o exemplo de saída acessava `chunks[5]` diretamente, sem garantir que existiam pelo menos 6 chunks. Corrigido para `chunks[min(5, len(chunks) - 1)]`.
+- **`filename` None causava `TypeError` no upload** — se o cliente enviasse um arquivo sem nome, `arquivo.filename` chegava como `None` e o `os.path.splitext(None)` lançava `TypeError` antes mesmo da validação de extensão. Corrigido com validação HTTP 400 explícita antes de qualquer uso do nome.
+- **`filename` sem sanitização permitia path traversal no upload** — o nome do arquivo enviado pelo cliente era usado diretamente em `os.path.join("data", "raw", arquivo.filename)`. Um valor como `subdir/evil.pdf` criava subpastas arbitrárias; null bytes (`\x00`) podiam causar comportamento indefinido. Corrigido com `os.path.basename` para descartar componentes de diretório, remoção de null bytes e regex que aceita apenas caracteres alfanuméricos seguros.
+- **Sem limite de tamanho no upload** — arquivos de qualquer tamanho eram aceitos e lidos inteiros em memória, possibilitando esgotamento de RAM e disco. Corrigido com `MAX_UPLOAD_BYTES = 50 * 1024 * 1024` (50 MB) e resposta HTTP 413 caso o limite seja excedido.
+- **Endpoint `/chat` sem tratamento de erro** — qualquer falha na OpenAI ou no Pinecone propagava um traceback completo como HTTP 500. Corrigido com `try/except` que registra o erro internamente e devolve HTTP 503 com mensagem genérica; pergunta vazia agora retorna HTTP 400.
+- **`processar_uploads` no Streamlit sem `try/except`** — erros de OCR, OpenAI ou Pinecone durante o upload pela interface Streamlit exibiam um traceback Python completo para o usuário, expondo caminhos internos e detalhes do ambiente. Corrigido com captura de exceção e exibição de mensagem amigável via `st.error`.
+- **Ausência de aviso LGPD na interface** — perguntas digitadas pelo usuário são enviadas para a API da OpenAI (servidores nos EUA) sem nenhuma notificação na tela, o que contraria o art. 33 da LGPD sobre transferência internacional de dados. Adicionado aviso na tela de boas-vindas informando que as perguntas são processadas pela OpenAI e orientando a não incluir dados pessoais sensíveis.
 
 ### ✅ Fases 9–11 — Stack React + FastAPI completo
 - `api.py` criado na raiz com 6 endpoints: GET /, POST /chat, GET /documentos, GET /metricas, POST /upload, DELETE /documentos/{nome}
