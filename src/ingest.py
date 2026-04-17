@@ -99,7 +99,7 @@ def processar_todos_arquivos(pasta_raw="data/raw"):
 
 
 if __name__ == "__main__":
-    chunks = processar_todos_pdfs()
+    chunks = processar_todos_arquivos()
 
     if chunks:
         print(f"\n📋 Exemplo de chunk:")

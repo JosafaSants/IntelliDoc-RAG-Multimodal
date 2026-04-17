@@ -367,9 +367,14 @@ def deletar_documento(nome: str):
         )
         print(f"🗑️  Vetores de '{nome}' removidos do Pinecone")
     except Exception as e:
+        # Loga o erro completo internamente para debug
+        # mas devolve mensagem genérica ao cliente —
+        # nunca expor detalhes internos (nome do índice,
+        # região, credenciais) para quem fez a requisição
+        logger.error("Erro ao deletar vetores do Pinecone para '%s': %s", nome, str(e), exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Erro ao deletar vetores do Pinecone: {str(e)}"
+            detail="Erro interno ao remover documento. Tente novamente."
         )
 
     # ── 3. Remove do controle de ingestão ───────────────────

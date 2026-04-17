@@ -39,7 +39,10 @@ RESPOSTA:"""
 
 def rag_query(pergunta, top_k=5):
     """Pipeline RAG completo: busca + geração."""
-    print(f"\n🔍 Pergunta: {pergunta}")
+    # Trunca a pergunta no log para não registrar dados pessoais completos
+    # Em produção, logs persistentes com perguntas inteiras violam LGPD
+    # Os primeiros 50 caracteres são suficientes para debug
+    print(f"\n🔍 Pergunta: {pergunta[:50]}{'...' if len(pergunta) > 50 else ''}")
     print("─" * 60)
 
     # 1. Converte pergunta em embedding

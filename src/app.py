@@ -291,18 +291,44 @@ hr { border-color: var(--border-subtle) !important; margin: 8px 0 !important; }
 # ════════════════════════════════════════════════════════════════════
  
 def listar_pdfs():
-    """Retorna lista ordenada dos PDFs em data/raw/."""
+    """Retorna lista ordenada de todos os documentos em data/raw/ — PDFs e imagens."""
     pasta = "data/raw"
     if not os.path.exists(pasta):
         return []
-    return sorted([f for f in os.listdir(pasta) if f.endswith(".pdf")])
+    extensoes_aceitas = {".pdf", ".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
+    # Filtra qualquer arquivo cuja extensão esteja no conjunto aceito
+    # Isso garante que imagens indexadas apareçam na sidebar junto com os PDFs
+    return sorted([
+        f for f in os.listdir(pasta)
+        if os.path.splitext(f)[1].lower() in extensoes_aceitas
+    ])
  
  
 def deletar_pdf(nome):
-    """Apaga o PDF do disco e remove seu hash do controle de ingestão."""
+    """
+    Remove o documento completamente:
+    1. Apaga o arquivo físico de data/raw/
+    2. Remove os vetores do Pinecone (filtro por metadata["arquivo"])
+    3. Remove o hash do controle de ingestão
+
+    Sem o passo 2, o conteúdo continuaria sendo retornado nas buscas
+    mesmo após o usuário deletar o documento pela interface.
+    """
+    # ── 1. Remove arquivo físico ────────────────────────────────
     caminho = os.path.join("data", "raw", nome)
     if os.path.exists(caminho):
         os.remove(caminho)
+
+    # ── 2. Remove vetores do Pinecone ───────────────────────────
+    # filter={"arquivo": {"$eq": nome}} deleta todos os vetores
+    # onde metadata["arquivo"] == nome — mesmo padrão do api.py
+    try:
+        indice = conectar_pinecone()
+        indice.delete(filter={"arquivo": {"$eq": nome}})
+    except Exception as e:
+        st.warning(f"⚠️ Arquivo removido localmente, mas erro ao limpar Pinecone: {e}")
+
+    # ── 3. Remove do controle de ingestão ───────────────────────
     controle = carregar_controle()
     if nome in controle:
         del controle[nome]
