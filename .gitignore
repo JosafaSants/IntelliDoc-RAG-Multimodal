@@ -27,3 +27,4 @@ data/raw/*
 
 # Jupyter
 .ipynb_checkpoints/
+data/processed/historico.db
