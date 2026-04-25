@@ -11,7 +11,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.55+-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Tesseract](https://img.shields.io/badge/Tesseract-5.5-blue?style=for-the-badge)](https://github.com/tesseract-ocr/tesseract)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-v1.2_Estavel-brightgreen?style=for-the-badge)]()
+[![Status](https://img.shields.io/badge/Status-v1.3_Estavel-brightgreen?style=for-the-badge)]()
 
 <br/>
 
@@ -29,6 +29,8 @@
 ## 🌐 Demo ao vivo
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://intellidoc-rag.streamlit.app)
+[![React App](https://img.shields.io/badge/React-Vercel-black?style=for-the-badge&logo=vercel)](https://intelli-doc-rag-multimodal.vercel.app)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Render-00979D?style=for-the-badge)](https://intellidoc-rag-multimodal.onrender.com)
 
 > Acesse, faça upload de um PDF e converse com ele — sem instalar nada.
 
@@ -68,6 +70,8 @@ O diferencial está no **pipeline de avaliação automática**: cada resposta é
 | 🔒 **Sanitização de Upload** | Validação de filename, null bytes, tamanho máximo 50MB | ✅ v1.2 |
 | 🛡️ **Tratamento de Erros** | try/except em todos os endpoints e funções críticas | ✅ v1.2 |
 | 💬 **Memória Persistente** | Histórico entre sessões via SQLite | ✅ v1.2 |
+| 🌐 **Deploy FastAPI** | Backend FastAPI live no Render (free tier) | ✅ v1.3 |
+| 🌐 **Deploy React** | Frontend React live no Vercel (free tier) | ✅ v1.3 |
 
 ---
 
@@ -354,7 +358,7 @@ npm run dev
 - [x] **Fase 10** — Sidebar conectada aos endpoints reais ✅ v1.2
 - [x] **Fase 11** — Upload e deleção de documentos via interface React ✅ v1.2
 - [x] **Fase 12** — Memória persistente entre sessões (SQLite) ✅
-- [ ] **Fase 13** — Deploy do stack React + FastAPI em nuvem 🔜
+- [x] **Fase 13** — Deploy React + FastAPI na nuvem ✅ v1.3
 
 ---
 
