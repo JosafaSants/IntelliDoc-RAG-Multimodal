@@ -1,14 +1,10 @@
 # render.yaml — Configuração do deploy do backend FastAPI no Render
-# Este arquivo diz ao Render como construir e iniciar a aplicação
-
 services:
-  - type: web                        # Tipo "web" = servidor HTTP com URL pública
-    name: intellidoc-api             # Nome do serviço — aparece no dashboard do Render
-    runtime: python                  # Linguagem do projeto
-    buildCommand: apt-get install -y tesseract-ocr tesseract-ocr-por tesseract-ocr-eng libgl1 && pip install -r requirements.txt
-    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT  # Comando para iniciar o servidor
-    # --host 0.0.0.0 → aceita conexões externas (obrigatório em nuvem)
-    # --port $PORT   → Render define a porta via variável de ambiente $PORT
+  - type: web
+    name: intellidoc-api
+    runtime: python
+    buildCommand: sudo apt-get install -y tesseract-ocr tesseract-ocr-por tesseract-ocr-eng libgl1 && pip install -r requirements.txt
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0                # Força Python 3.11 — mesmo da sua máquina local
+        value: "3.11.0"
