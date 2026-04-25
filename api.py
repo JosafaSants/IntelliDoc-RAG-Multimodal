@@ -43,13 +43,26 @@ app = FastAPI(
 # dos navegadores que bloqueia requisições entre origens diferentes.
 # Exemplo: React rodando em localhost:5173 tentando acessar a API
 # em localhost:8000 — sem essa configuração, o navegador bloquearia.
+
+# FRONTEND_URL lido do .env — será a URL do Vercel em produção
+# Em desenvolvimento fica vazio e só os localhost são usados
+PRODUCTION_FRONTEND_URL = os.getenv("FRONTEND_URL", "")
+
+# Lista base com as origens locais de desenvolvimento
+origins = [
+    "http://localhost:5173",   # Vite dev server
+    "http://localhost:8080",   # Porta alternativa
+    "http://localhost:3000",   # Porta alternativa
+]
+
+# Se FRONTEND_URL estiver definido no .env (produção), adiciona à lista
+# Isso evita hardcodar a URL do Vercel no código
+if PRODUCTION_FRONTEND_URL:
+    origins.append(PRODUCTION_FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",   # Porta padrão do Vite (frontend React em desenvolvimento)
-        "http://localhost:8080",   # Porta alternativa caso o React rode aqui
-        "http://localhost:3000",   # Porta alternativa caso o React rode aqui
-    ],
+    allow_origins=origins,         # Origens permitidas — locais + produção
     allow_credentials=True,        # Permite envio de cookies e headers de autenticação
     allow_methods=["*"],           # Permite todos os métodos HTTP (GET, POST, DELETE etc.)
     allow_headers=["*"],           # Permite todos os headers HTTP
