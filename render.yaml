@@ -8,8 +8,3 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.0"
-    nativePackages:
-      - tesseract-ocr
-      - tesseract-ocr-por
-      - tesseract-ocr-eng
-      - libgl1
